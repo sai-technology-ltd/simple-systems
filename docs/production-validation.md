@@ -23,12 +23,12 @@ Set these env vars on the server:
 
 - `NODE_ENV=production`
 - `PORT=3000`
-- `BASE_URL=https://api.simplesystems.app`
+- `BASE_URL=https://api.simplesystem.app`
 - `DATABASE_URL=<supabase postgres connection string>`
 - `TOKEN_ENC_KEY=<64-char-hex OR base64-encoded-32-byte-key>`
 - `NOTION_CLIENT_ID=<notion client id>`
 - `NOTION_CLIENT_SECRET=<notion client secret>`
-- `NOTION_REDIRECT_URI=https://api.simplesystems.app/notion/oauth/callback`
+- `NOTION_REDIRECT_URI=https://api.simplesystem.app/notion/oauth/callback`
 - `NOTION_VERSION=2022-06-28`
 - `POSTMARK_SERVER_TOKEN=<postmark token>`
 - `ADMIN_API_KEY=<strong random key>`
@@ -52,7 +52,7 @@ Verify:
 
 ```bash
 docker compose ps
-curl -sS https://api.simplesystems.app/health
+curl -sS https://api.simplesystem.app/health
 ```
 
 Expected:
@@ -66,7 +66,7 @@ Expected:
 ## 3) Create your first client
 
 ```bash
-curl -sS -X POST "https://api.simplesystems.app/admin/clients" \
+curl -sS -X POST "https://api.simplesystem.app/admin/clients" \
   -H "x-admin-key: $ADMIN_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -80,7 +80,7 @@ Check it exists:
 
 ```bash
 curl -sS -H "x-admin-key: $ADMIN_API_KEY" \
-  "https://api.simplesystems.app/admin/clients/demo-co"
+  "https://api.simplesystem.app/admin/clients/demo-co"
 ```
 
 ---
@@ -90,7 +90,7 @@ curl -sS -H "x-admin-key: $ADMIN_API_KEY" \
 Open in browser:
 
 ```text
-https://api.simplesystems.app/notion/oauth/start?clientSlug=demo-co&product=HIRING
+https://api.simplesystem.app/notion/oauth/start?clientSlug=demo-co&product=HIRING
 ```
 
 Complete OAuth.
@@ -99,7 +99,7 @@ Then re-check client:
 
 ```bash
 curl -sS -H "x-admin-key: $ADMIN_API_KEY" \
-  "https://api.simplesystems.app/admin/clients/demo-co"
+  "https://api.simplesystem.app/admin/clients/demo-co"
 ```
 
 You should see Notion fields populated (`notionWorkspaceId`, token encrypted in DB).
@@ -111,13 +111,13 @@ You should see Notion fields populated (`notionWorkspaceId`, token encrypted in 
 List accessible DBs:
 
 ```bash
-curl -sS "https://api.simplesystems.app/clients/demo-co/notion/databases"
+curl -sS "https://api.simplesystem.app/clients/demo-co/notion/databases"
 ```
 
 Select DBs:
 
 ```bash
-curl -sS -X POST "https://api.simplesystems.app/clients/demo-co/notion/databases/select" \
+curl -sS -X POST "https://api.simplesystem.app/clients/demo-co/notion/databases/select" \
   -H "Content-Type: application/json" \
   -d '{
     "candidatesDbId":"<candidates_db_id>",
@@ -143,7 +143,7 @@ Ensure Roles DB has:
 Test resolver:
 
 ```bash
-curl -sS "https://api.simplesystems.app/apply/demo-co/<roleSlug>"
+curl -sS "https://api.simplesystem.app/apply/demo-co/<roleSlug>"
 ```
 
 Expected:
@@ -157,7 +157,7 @@ Expected:
 
 ```bash
 SECRET=$(curl -sS -H "x-admin-key: $ADMIN_API_KEY" \
-  "https://api.simplesystems.app/admin/clients/demo-co" | \
+  "https://api.simplesystem.app/admin/clients/demo-co" | \
   python3 -c 'import json,sys;print(json.load(sys.stdin)["webhookSecret"])')
 ```
 
@@ -179,7 +179,7 @@ PY
 ### 7.3 Post webhook
 
 ```bash
-curl -sS -X POST "https://api.simplesystems.app/webhooks/hiring/intake/demo-co" \
+curl -sS -X POST "https://api.simplesystem.app/webhooks/hiring/intake/demo-co" \
   -H "Content-Type: application/json" \
   -H "x-webhook-timestamp: ${TS}" \
   -H "x-webhook-signature: ${SIG}" \
@@ -204,7 +204,7 @@ Verify candidate in Notion Candidates DB.
 Update settings if needed:
 
 ```bash
-curl -sS -X PATCH "https://api.simplesystems.app/clients/demo-co/settings" \
+curl -sS -X PATCH "https://api.simplesystem.app/clients/demo-co/settings" \
   -H "Content-Type: application/json" \
   -d '{
     "emailEnabled": true,
@@ -221,7 +221,7 @@ Fetch client event logs:
 
 ```bash
 curl -sS -H "x-admin-key: $ADMIN_API_KEY" \
-  "https://api.simplesystems.app/admin/clients/demo-co/logs"
+  "https://api.simplesystem.app/admin/clients/demo-co/logs"
 ```
 
 Check service logs:

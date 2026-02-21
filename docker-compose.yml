@@ -4,7 +4,7 @@ services:
     container_name: simple-systems-supabase-db
     restart: unless-stopped
     ports:
-      - "54329:5432"
+      - '54329:5432'
     environment:
       POSTGRES_DB: simple_systems
       POSTGRES_USER: postgres
@@ -12,7 +12,7 @@ services:
     volumes:
       - supabase_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d simple_systems"]
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d simple_systems']
       interval: 10s
       timeout: 5s
       retries: 10
@@ -27,12 +27,13 @@ services:
       supabase-db:
         condition: service_healthy
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       NODE_ENV: production
       PORT: 3000
       BASE_URL: http://localhost:3000
-      DATABASE_URL: postgresql://postgres:postgres@supabase-db:5432/simple_systems?schema=public
+      DATABASE_URL: ${DATABASE_URL}
+      DIRECT_URL: ${DIRECT_URL}
       TOKEN_ENC_KEY: ${TOKEN_ENC_KEY}
       NOTION_CLIENT_ID: ${NOTION_CLIENT_ID}
       NOTION_CLIENT_SECRET: ${NOTION_CLIENT_SECRET}
