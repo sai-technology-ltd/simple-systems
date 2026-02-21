@@ -1,21 +1,21 @@
 services:
-  supabase-db:
-    image: supabase/postgres:15.1.0.117
-    container_name: simple-systems-supabase-db
-    restart: unless-stopped
-    ports:
-      - '54329:5432'
-    environment:
-      POSTGRES_DB: simple_systems
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    volumes:
-      - supabase_db_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres -d simple_systems']
-      interval: 10s
-      timeout: 5s
-      retries: 10
+  # supabase-db:
+  #   image: supabase/postgres:15.1.0.117
+  #   container_name: simple-systems-supabase-db
+  #   restart: unless-stopped
+  #   ports:
+  #     - '54329:5432'
+  #   environment:
+  #     POSTGRES_DB: simple_systems
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: postgres
+  #   volumes:
+  #     - supabase_db_data:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ['CMD-SHELL', 'pg_isready -U postgres -d simple_systems']
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 10
 
   api:
     build:
@@ -23,9 +23,9 @@ services:
       dockerfile: Dockerfile
     container_name: simple-systems-api
     restart: unless-stopped
-    depends_on:
-      supabase-db:
-        condition: service_healthy
+    # depends_on:
+    #   supabase-db:
+    #     condition: service_healthy
     ports:
       - '3000:3000'
     environment:
