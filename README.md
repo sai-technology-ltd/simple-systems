@@ -55,3 +55,8 @@ This repo ships with `docker-compose.yml` using `supabase/postgres`:
 ## Operational scripts
 - `scripts/migrate_first_client.sh`
 - `scripts/smoke_webhook.sh`
+
+## Validation docs
+- `docs/deploy-checklist.md`
+- `docs/runbook.md`
+- `docs/production-validation.md` (step-by-step go-live verification)
