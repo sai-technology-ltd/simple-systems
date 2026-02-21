@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHmac, randomBytes, timingSafeEqual } from 'crypto';
 import { Prisma } from '@prisma/client';
@@ -23,7 +27,8 @@ export class NotionOauthService {
 
   async getStartUrl(clientSlug: string, product = 'HIRING') {
     const client = await this.clients.findActiveBySlug(clientSlug);
-    if (!client) throw new BadRequestException('Active client not found for slug');
+    if (!client)
+      throw new BadRequestException('Active client not found for slug');
 
     const state = this.signState({
       clientId: client.id,
@@ -69,7 +74,9 @@ export class NotionOauthService {
     });
 
     if (!res.ok) {
-      throw new BadRequestException(`Notion token exchange failed: ${res.status}`);
+      throw new BadRequestException(
+        `Notion token exchange failed: ${res.status}`,
+      );
     }
 
     const token = (await res.json()) as {
@@ -104,7 +111,7 @@ export class NotionOauthService {
 
     return {
       ok: true,
-      redirectTo: 'http://app.simplehiring.app/onboard/databases',
+      redirectTo: 'https://simplehiring.app/onboarding',
     };
   }
 
@@ -117,7 +124,9 @@ export class NotionOauthService {
 
   private signState(payload: StatePayload): string {
     const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
-    const sig = createHmac('sha256', this.stateSecret()).update(body).digest('base64url');
+    const sig = createHmac('sha256', this.stateSecret())
+      .update(body)
+      .digest('base64url');
     return `${body}.${sig}`;
   }
 
@@ -125,13 +134,18 @@ export class NotionOauthService {
     const [body, sig] = state.split('.');
     if (!body || !sig) throw new UnauthorizedException('Invalid state format');
 
-    const expected = createHmac('sha256', this.stateSecret()).update(body).digest('base64url');
+    const expected = createHmac('sha256', this.stateSecret())
+      .update(body)
+      .digest('base64url');
     const ok = timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
     if (!ok) throw new UnauthorizedException('Invalid state signature');
 
-    const payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf8')) as StatePayload;
+    const payload = JSON.parse(
+      Buffer.from(body, 'base64url').toString('utf8'),
+    ) as StatePayload;
     const ageMs = Date.now() - payload.issuedAt;
-    if (ageMs > 10 * 60 * 1000) throw new UnauthorizedException('State expired');
+    if (ageMs > 10 * 60 * 1000)
+      throw new UnauthorizedException('State expired');
     return payload;
   }
 }
