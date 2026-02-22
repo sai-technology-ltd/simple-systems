@@ -68,7 +68,7 @@ export default function Home() {
                 { step: '01', title: 'Connect Notion', desc: 'Sign in with Notion. We request minimal permissions — just enough to manage your hiring data.' },
                 { step: '02', title: 'Pick Databases', desc: 'Select your Candidates, Roles, and Stages databases. We validate everything works perfectly.' },
                 { step: '03', title: 'Share Link', desc: 'Get your application URL. Candidates apply, you get notified, data appears in Notion.' },
-              ].map((item, i) => (
+              ].map((item) => (
                 <div key={item.step} className="relative group">
                   <div className="absolute inset-0 bg-gradient-to-b from-orange-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
                   <div className="relative p-8 rounded-2xl border border-zinc-100 bg-white hover:shadow-xl hover:shadow-zinc-100/50 transition-all duration-300">

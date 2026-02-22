@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { CheckCircle2, ArrowRight, ArrowLeft, Upload, ExternalLink, Send, AlertCircle, Check } from 'lucide-react';
+import Image from 'next/image';
+import { CheckCircle2, ArrowRight, ArrowLeft, Upload, ExternalLink, Send, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -211,9 +212,9 @@ export default function OnboardingPage() {
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-zinc-700">Logo (optional)</Label>
                     <div className="flex items-center gap-4 p-4 rounded-xl border border-dashed border-zinc-200 bg-zinc-50">
-                      <div className="w-12 h-12 rounded-lg bg-white border border-zinc-200 flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-lg bg-white border border-zinc-200 flex items-center justify-center overflow-hidden">
                         {companyData.logoUrl ? (
-                          <img src={companyData.logoUrl} alt="Logo" className="w-full h-full object-contain rounded-lg" />
+                          <Image src={companyData.logoUrl} alt="Logo" width={48} height={48} className="object-contain" />
                         ) : (
                           <Upload className="w-5 h-5 text-zinc-400" />
                         )}
