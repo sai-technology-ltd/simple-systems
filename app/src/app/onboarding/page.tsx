@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { CheckCircle2, ArrowRight, ArrowLeft, Upload, ExternalLink, Send, AlertCircle } from 'lucide-react';
+import { CheckCircle2, ArrowRight, ArrowLeft, Upload, ExternalLink, Send, AlertCircle, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,11 +13,11 @@ import { EnhancedSelect } from '@/components/ui/enhanced-select';
 import { CopyField } from '@/components/ui/copy-field';
 
 const STEPS = [
-  { id: 1, title: 'Company Details' },
-  { id: 2, title: 'Connect Notion' },
-  { id: 3, title: 'Select Databases' },
-  { id: 4, title: 'Generate Link' },
-  { id: 5, title: 'Test Submission' },
+  { id: 1, title: 'Company', short: 'Co' },
+  { id: 2, title: 'Connect', short: 'Connect' },
+  { id: 3, title: 'Databases', short: 'DBs' },
+  { id: 4, title: 'Live', short: 'Live' },
+  { id: 5, title: 'Test', short: 'Test' },
 ];
 
 type DbOption = { id: string; title: string };
@@ -40,11 +40,6 @@ interface DatabaseSelection {
   stagesDbId: string;
 }
 
-interface SchemaError {
-  type: 'candidates' | 'roles' | 'stages';
-  message: string;
-}
-
 export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -61,14 +56,17 @@ export default function OnboardingPage() {
     connected: false,
   });
   
-  const [databases, setDatabases] = useState<DbOption[]>([]);
+  const [databases] = useState<DbOption[]>([
+    { id: 'db-1', title: 'Candidates' },
+    { id: 'db-2', title: 'Roles' },
+    { id: 'db-3', title: 'Stages' },
+  ]);
   const [dbSelection, setDbSelection] = useState<DatabaseSelection>({
     candidatesDbId: '',
     rolesDbId: '',
     stagesDbId: '',
   });
   
-  const [schemaErrors, setSchemaErrors] = useState<SchemaError[]>([]);
   const [setupValidated, setSetupValidated] = useState(false);
   const [testSent, setTestSent] = useState(false);
   const [emailEnabled, setEmailEnabled] = useState(true);
@@ -82,51 +80,19 @@ export default function OnboardingPage() {
 
   async function connectNotion() {
     setLoading(true);
-    try {
-      const response = await fetch('/api/notion/oauth/start?product=HIRING', {
-        credentials: 'include',
-      });
-      const data = await response.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        setNotionData({
-          workspaceId: 'demo-workspace-id',
-          workspaceName: 'Demo Workspace',
-          connected: true,
-        });
-      }
-    } catch {
-      setNotionData({
-        workspaceId: 'demo-workspace-id',
-        workspaceName: 'Demo Workspace',
-        connected: true,
-      });
-    } finally {
-      setLoading(false);
-    }
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setNotionData({
+      workspaceId: 'ws_demo_123',
+      workspaceName: 'Demo Workspace',
+      connected: true,
+    });
+    setLoading(false);
   }
 
   async function validateSetup() {
     setLoading(true);
-    setError(null);
-    setSchemaErrors([]);
-    
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    const errors: SchemaError[] = [];
-    if (!dbSelection.candidatesDbId) {
-      errors.push({ type: 'candidates', message: 'Please select a Candidates database' });
-    }
-    if (!dbSelection.rolesDbId) {
-      errors.push({ type: 'roles', message: 'Please select a Roles database' });
-    }
-    if (!dbSelection.stagesDbId) {
-      errors.push({ type: 'stages', message: 'Please select a Stages database' });
-    }
-    
-    setSchemaErrors(errors);
-    setSetupValidated(errors.length === 0);
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    setSetupValidated(true);
     setLoading(false);
   }
 
@@ -151,353 +117,343 @@ export default function OnboardingPage() {
 
   const canProceed = () => {
     switch (currentStep) {
-      case 1:
-        return companyData.companyName && companyData.replyToEmail;
-      case 2:
-        return notionData.connected;
-      case 3:
-        return dbSelection.candidatesDbId && dbSelection.rolesDbId && dbSelection.stagesDbId;
-      case 4:
-        return setupValidated;
-      case 5:
-        return true;
-      default:
-        return false;
+      case 1: return companyData.companyName && companyData.replyToEmail;
+      case 2: return notionData.connected;
+      case 3: return dbSelection.candidatesDbId && dbSelection.rolesDbId && dbSelection.stagesDbId;
+      case 4: return setupValidated;
+      case 5: return true;
+      default: return false;
     }
   };
 
   return (
-    <main className="min-h-screen bg-zinc-50 py-8">
-      <div className="mx-auto max-w-3xl px-4">
-        <div className="mb-8">
-          <Link href="/" className="text-sm font-medium text-zinc-500 hover:text-zinc-900">
-            ← Back to Home
+    <div className="min-h-screen bg-[#fafafa]">
+      <header className="bg-white border-b border-zinc-100 sticky top-0 z-50">
+        <div className="mx-auto max-w-3xl px-6 h-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">
+              <span className="text-white font-bold text-sm">SH</span>
+            </div>
+            <span className="text-lg font-semibold text-zinc-900">Simple Hiring</span>
           </Link>
+          <Link href="/" className="text-sm text-zinc-500 hover:text-zinc-900">Exit setup</Link>
         </div>
+      </header>
 
-        <div className="mb-8 space-y-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-zinc-900">Setup Your Account</h1>
-            <span className="text-sm text-zinc-500">Step {currentStep} of {STEPS.length}</span>
+      <main className="py-12 px-6">
+        <div className="mx-auto max-w-2xl">
+          <div className="mb-10">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm font-medium text-zinc-500">Step {currentStep} of {STEPS.length}</span>
+              <span className="text-sm text-zinc-400">{Math.round(progressValue)}% complete</span>
+            </div>
+            <Progress value={progressValue} className="h-1.5 bg-zinc-100" />
+            <div className="flex justify-between mt-3">
+              {STEPS.map((step) => (
+                <div
+                  key={step.id}
+                  className={`flex items-center gap-2 text-xs font-medium transition-colors ${
+                    step.id === currentStep
+                      ? 'text-orange-600'
+                      : step.id < currentStep
+                      ? 'text-emerald-600'
+                      : 'text-zinc-300'
+                  }`}
+                >
+                  {step.id < currentStep ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    <div className="w-4 h-4 rounded-full border-2 border-current" />
+                  )}
+                  <span className="hidden sm:inline">{step.title}</span>
+                  <span className="sm:hidden">{step.short}</span>
+                </div>
+              ))}
+            </div>
           </div>
-          <Progress value={progressValue} className="h-2" />
-          <div className="flex justify-between">
-            {STEPS.map((step) => (
-              <div
-                key={step.id}
-                className={`flex items-center gap-2 text-sm ${
-                  step.id === currentStep
-                    ? 'font-medium text-[#ea5c1c]'
-                    : step.id < currentStep
-                    ? 'text-emerald-600'
-                    : 'text-zinc-400'
-                }`}
-              >
-                {step.id < currentStep ? (
-                  <CheckCircle2 className="h-4 w-4" />
-                ) : (
-                  <div className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-current text-xs">
-                    {step.id}
+
+          <Card className="border-0 shadow-xl shadow-zinc-100/50">
+            {currentStep === 1 && (
+              <CardContent className="p-8">
+                <div className="text-center mb-8">
+                  <div className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center mx-auto mb-4">
+                    <Upload className="w-6 h-6 text-orange-600" />
                   </div>
-                )}
-                <span className="hidden sm:inline">{step.title}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <Card className="bg-white">
-          {currentStep === 1 && (
-            <CardContent className="pt-6">
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-xl font-semibold text-zinc-900">Company Details</h2>
-                  <p className="mt-1 text-sm text-zinc-500">Tell us a bit about your company.</p>
+                  <h2 className="text-2xl font-bold text-zinc-900">Tell us about your company</h2>
+                  <p className="mt-2 text-zinc-500">We&apos;ll use this for email notifications.</p>
                 </div>
                 
-                <div className="space-y-4">
+                <div className="space-y-5">
                   <div className="space-y-2">
-                    <Label htmlFor="companyName">Company Name *</Label>
+                    <Label htmlFor="companyName" className="text-sm font-medium text-zinc-700">Company name</Label>
                     <Input
                       id="companyName"
-                      placeholder="Acme Inc."
+                      placeholder="Acme Salon"
                       value={companyData.companyName}
                       onChange={(e) => setCompanyData({ ...companyData, companyName: e.target.value })}
+                      className="h-11 bg-zinc-50 border-zinc-200 focus:bg-white"
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="replyToEmail">Reply-To Email *</Label>
+                    <Label htmlFor="replyToEmail" className="text-sm font-medium text-zinc-700">Reply-to email</Label>
                     <Input
                       id="replyToEmail"
                       type="email"
                       placeholder="hiring@acme.com"
                       value={companyData.replyToEmail}
                       onChange={(e) => setCompanyData({ ...companyData, replyToEmail: e.target.value })}
+                      className="h-11 bg-zinc-50 border-zinc-200 focus:bg-white"
                     />
-                    <p className="text-xs text-zinc-500">We&apos;ll send confirmation emails from this address.</p>
+                    <p className="text-xs text-zinc-400">Where candidate confirmations will be sent from</p>
                   </div>
                   
                   <div className="space-y-2">
-                    <Label>Logo (optional)</Label>
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-16 w-16 items-center justify-center rounded-lg border-2 border-dashed border-zinc-300">
+                    <Label className="text-sm font-medium text-zinc-700">Logo (optional)</Label>
+                    <div className="flex items-center gap-4 p-4 rounded-xl border border-dashed border-zinc-200 bg-zinc-50">
+                      <div className="w-12 h-12 rounded-lg bg-white border border-zinc-200 flex items-center justify-center">
                         {companyData.logoUrl ? (
-                          <img src={companyData.logoUrl} alt="Logo" className="h-full w-full object-contain rounded-lg" />
+                          <img src={companyData.logoUrl} alt="Logo" className="w-full h-full object-contain rounded-lg" />
                         ) : (
-                          <Upload className="h-6 w-6 text-zinc-400" />
+                          <Upload className="w-5 h-5 text-zinc-400" />
                         )}
                       </div>
-                      <div>
-                        <Input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          id="logo-upload"
-                          onChange={(e) => {
+                      <div className="flex-1">
+                        <label className="text-sm font-medium text-orange-600 cursor-pointer hover:text-orange-700">
+                          Upload logo
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) {
                               const reader = new FileReader();
-                              reader.onload = (ev) => {
-                                setCompanyData({ ...companyData, logoUrl: ev.target?.result as string });
-                              };
+                              reader.onload = (ev) => setCompanyData({ ...companyData, logoUrl: ev.target?.result as string });
                               reader.readAsDataURL(file);
                             }
-                          }}
-                        />
-                        <Label htmlFor="logo-upload" className="cursor-pointer text-sm font-medium text-[#ea5c1c] hover:text-[#e65722]">
-                          Upload logo
-                        </Label>
-                        <p className="text-xs text-zinc-500">PNG, JPG up to 1MB</p>
+                          }} />
+                        </label>
+                        <p className="text-xs text-zinc-400">PNG or JPG, max 1MB</p>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          )}
+              </CardContent>
+            )}
 
-          {currentStep === 2 && (
-            <CardContent className="pt-6">
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-xl font-semibold text-zinc-900">Connect Your Notion Workspace</h2>
-                  <p className="mt-1 text-sm text-zinc-500">We need access to read and write to your Notion databases.</p>
+            {currentStep === 2 && (
+              <CardContent className="p-8">
+                <div className="text-center mb-8">
+                  <div className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center mx-auto mb-4">
+                    <svg viewBox="0 0 100 100" className="w-6 h-6">
+                      <path fill="#ea5c1c" d="M6.017 4.313l55.333 -4.087c6.797 -.583 8.543 -.19 12.817 2.917l17.663 12.443c2.913 2.14 3.883 2.723 3.883 5.053v68.243c0 4.277 -1.553 6.807 -6.99 7.193L24.467 99.967c-4.08 .194 -6.023 .39 -8.16 -2.533L3.3 79.94c-2.333 -3.113 -2.91 -5.443 -2.91 -8.167V11.113c0 -3.497 1.94 -5.626 5.627 -6.8z"/>
+                    </svg>
+                  </div>
+                  <h2 className="text-2xl font-bold text-zinc-900">Connect your Notion</h2>
+                  <p className="mt-2 text-zinc-500">We&apos;ll need permission to read and write to your databases.</p>
                 </div>
 
                 {notionData.connected ? (
-                  <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-                      <div>
-                        <p className="font-medium text-emerald-900">Connected to {notionData.workspaceName}</p>
-                        <p className="text-sm text-emerald-700">Workspace ID: {notionData.workspaceId}</p>
-                      </div>
+                  <div className="rounded-2xl bg-emerald-50 border border-emerald-100 p-6 text-center">
+                    <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-3">
+                      <CheckCircle2 className="w-6 h-6 text-emerald-600" />
                     </div>
+                    <p className="font-semibold text-emerald-900">Connected to {notionData.workspaceName}</p>
+                    <p className="text-sm text-emerald-700 mt-1">You&apos;re all set!</p>
                   </div>
                 ) : (
-                  <div className="rounded-lg border border-zinc-200 p-8 text-center">
-                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#ea5c1c]/10">
-                      <svg viewBox="0 0 100 100" className="h-8 w-8">
+                  <div className="rounded-2xl border border-zinc-200 p-8 text-center">
+                    <div className="w-16 h-16 rounded-2xl bg-zinc-100 flex items-center justify-center mx-auto mb-4">
+                      <svg viewBox="0 0 100 100" className="w-8 h-8">
                         <path fill="#ea5c1c" d="M6.017 4.313l55.333 -4.087c6.797 -.583 8.543 -.19 12.817 2.917l17.663 12.443c2.913 2.14 3.883 2.723 3.883 5.053v68.243c0 4.277 -1.553 6.807 -6.99 7.193L24.467 99.967c-4.08 .194 -6.023 .39 -8.16 -2.533L3.3 79.94c-2.333 -3.113 -2.91 -5.443 -2.91 -8.167V11.113c0 -3.497 1.94 -5.626 5.627 -6.8z"/>
-                        <path fill="#fff" d="M61.35 0L6.017 4.313c-2.72 .194 -4.473 1.553 -5.047 4.277v58.687c0 3.497 1.553 5.443 4.86 6.023l55.143 3.883c3.69 .39 5.247 .39 7.77 -2.333l15.377 -16.16c2.333 -2.527 2.91 -3.497 2.91 -5.827V7.233c0 -3.303 -1.75 -5.05 -5.7 -7.233zM25.92 19.523c-5.247 0 -9.513 4.277 -9.513 9.523s4.266 9.523 9.513 9.523c5.24 0 9.507 -4.277 9.507 -9.523s-4.267 -9.523 -9.507 -9.523zm38.193 0c-5.24 0 -9.507 4.277 -9.507 9.523s4.267 9.523 9.507 9.523c5.247 0 9.52 -4.277 9.52 -9.523s-4.273 -9.523 -9.52 -9.523z"/>
                       </svg>
                     </div>
-                    <p className="mb-4 text-sm text-zinc-600">Click the button below to connect your Notion workspace. We&apos;ll only access what we need to manage candidates.</p>
-                    <Button onClick={connectNotion} disabled={loading} size="lg">
+                    <p className="text-zinc-600 mb-6">Click below to connect your Notion workspace. We&apos;ll only access what we need.</p>
+                    <Button onClick={connectNotion} disabled={loading} size="lg" className="bg-zinc-900 hover:bg-zinc-800">
                       {loading ? 'Connecting...' : 'Connect Notion'}
                     </Button>
                   </div>
                 )}
-              </div>
-            </CardContent>
-          )}
+              </CardContent>
+            )}
 
-          {currentStep === 3 && (
-            <CardContent className="pt-6">
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-xl font-semibold text-zinc-900">Select Your Databases</h2>
-                  <p className="mt-1 text-sm text-zinc-500">Choose which Notion databases to use for your hiring workflow.</p>
+            {currentStep === 3 && (
+              <CardContent className="p-8">
+                <div className="text-center mb-8">
+                  <div className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-6 h-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                    </svg>
+                  </div>
+                  <h2 className="text-2xl font-bold text-zinc-900">Select your databases</h2>
+                  <p className="mt-2 text-zinc-500">Pick the Notion databases for your hiring workflow.</p>
                 </div>
 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Candidates Database *</Label>
+                    <Label className="text-sm font-medium text-zinc-700">Candidates database</Label>
                     <EnhancedSelect
                       value={dbSelection.candidatesDbId}
                       onChange={(value) => setDbSelection({ ...dbSelection, candidatesDbId: value })}
                       options={dbOptions}
-                      placeholder="Select your Candidates database..."
+                      placeholder="Select database..."
                     />
-                    <p className="text-xs text-zinc-500">Where candidate applications will be created</p>
+                    <p className="text-xs text-zinc-400">Where new applications will be created</p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Roles Database *</Label>
+                    <Label className="text-sm font-medium text-zinc-700">Roles database</Label>
                     <EnhancedSelect
                       value={dbSelection.rolesDbId}
                       onChange={(value) => setDbSelection({ ...dbSelection, rolesDbId: value })}
                       options={dbOptions}
-                      placeholder="Select your Roles database..."
+                      placeholder="Select database..."
                     />
-                    <p className="text-xs text-zinc-500">The positions you&apos;re hiring for</p>
+                    <p className="text-xs text-zinc-400">Your open positions</p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Stages Database *</Label>
+                    <Label className="text-sm font-medium text-zinc-700">Stages database</Label>
                     <EnhancedSelect
                       value={dbSelection.stagesDbId}
                       onChange={(value) => setDbSelection({ ...dbSelection, stagesDbId: value })}
                       options={dbOptions}
-                      placeholder="Select your Stages database..."
+                      placeholder="Select database..."
                     />
-                    <p className="text-xs text-zinc-500">Hiring pipeline stages (e.g., Applied, Interview, Offer)</p>
+                    <p className="text-xs text-zinc-400">Your hiring pipeline stages</p>
                   </div>
                 </div>
 
-                {schemaErrors.length > 0 && (
-                  <div className="space-y-2">
-                    {schemaErrors.map((err, i) => (
-                      <div key={i} className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3">
-                        <AlertCircle className="h-4 w-4 text-red-600 mt-0.5" />
-                        <p className="text-sm text-red-800">{err.message}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
                 {setupValidated && (
-                  <div className="flex items-start gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-600 mt-0.5" />
+                  <div className="mt-6 rounded-xl bg-emerald-50 border border-emerald-100 p-4 flex items-start gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 mt-0.5" />
                     <div>
-                      <p className="font-medium text-emerald-900">Setup validated!</p>
-                      <p className="text-sm text-emerald-700">Your databases are ready to go.</p>
+                      <p className="font-medium text-emerald-900">All databases validated</p>
+                      <p className="text-sm text-emerald-700">Your setup is ready to go!</p>
                     </div>
                   </div>
                 )}
-              </div>
-            </CardContent>
-          )}
+              </CardContent>
+            )}
 
-          {currentStep === 4 && (
-            <CardContent className="pt-6">
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-xl font-semibold text-zinc-900">You&apos;re Live! 🎉</h2>
-                  <p className="mt-1 text-sm text-zinc-500">Here&apos;s your application link and webhook setup.</p>
+            {currentStep === 4 && (
+              <CardContent className="p-8">
+                <div className="text-center mb-8">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-zinc-900">You&apos;re live! 🎉</h2>
+                  <p className="mt-2 text-zinc-500">Here&apos;s your setup. Share this link with candidates.</p>
                 </div>
 
                 <div className="space-y-4">
                   <CopyField
-                    label="Your application link"
-                    value={`https://simplehiring.app/apply/${companyData.companyName.toLowerCase().replace(/\s+/g, '-') || 'acme'}/nail-technician`}
+                    label="Application link"
+                    value={`simplehiring.app/apply/${companyData.companyName.toLowerCase().replace(/\s+/g, '-') || 'acme'}/open-role`}
                   />
                   
                   <CopyField
-                    label="Your webhook URL"
-                    value={`https://api.simplesystems.app/webhooks/hiring/intake/${companyData.companyName.toLowerCase().replace(/\s+/g, '-') || 'acme'}`}
+                    label="Webhook URL"
+                    value={`api.simplesystems.app/webhooks/hiring/${companyData.companyName.toLowerCase().replace(/\s+/g, '-') || 'acme'}`}
                   />
                   
                   <CopyField
-                    label="Your webhook secret"
-                    value="whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                    label="Webhook secret"
+                    value="whsec_xxxxxxxxxxxxxxxxxxxxx"
                     showReveal
                   />
                 </div>
 
-                <div className="flex items-center justify-between rounded-lg border border-zinc-200 p-4">
-                  <div>
-                    <p className="font-medium text-zinc-900">Email notifications</p>
-                    <p className="text-sm text-zinc-500">Send confirmation emails to candidates</p>
+                <div className="mt-6 p-4 rounded-xl bg-zinc-50 border border-zinc-100">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-zinc-900">Email notifications</p>
+                      <p className="text-sm text-zinc-500">Send confirmations to applicants</p>
+                    </div>
+                    <Toggle checked={emailEnabled} onChange={setEmailEnabled} />
                   </div>
-                  <Toggle checked={emailEnabled} onChange={setEmailEnabled} />
                 </div>
 
-                <div className="flex gap-3">
-                  <Button variant="outline" className="flex-1">
-                    <ExternalLink className="mr-2 h-4 w-4" />
-                    View Setup Guide
+                <div className="mt-6 flex gap-3">
+                  <Button variant="outline" className="flex-1 border-zinc-200">
+                    <ExternalLink className="mr-2 w-4 h-4" />
+                    View guide
                   </Button>
                 </div>
-              </div>
-            </CardContent>
-          )}
+              </CardContent>
+            )}
 
-          {currentStep === 5 && (
-            <CardContent className="pt-6">
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-xl font-semibold text-zinc-900">Test Your Setup</h2>
-                  <p className="mt-1 text-sm text-zinc-500">Send a test application to make sure everything works.</p>
+            {currentStep === 5 && (
+              <CardContent className="p-8">
+                <div className="text-center mb-8">
+                  <div className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center mx-auto mb-4">
+                    <Send className="w-6 h-6 text-orange-600" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-zinc-900">Test your setup</h2>
+                  <p className="mt-2 text-zinc-500">Send a test application to verify everything works.</p>
                 </div>
 
                 {testSent ? (
-                  <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-6 text-center">
-                    <div className="mb-2 text-4xl">🎉</div>
-                    <p className="font-medium text-emerald-900">Test candidate created successfully!</p>
-                    <p className="mt-1 text-sm text-emerald-700">Check your Notion database to see the test entry.</p>
+                  <div className="rounded-2xl bg-emerald-50 border border-emerald-100 p-8 text-center">
+                    <div className="text-4xl mb-3">🎉</div>
+                    <p className="font-semibold text-emerald-900 text-lg">Test successful!</p>
+                    <p className="text-sm text-emerald-700 mt-2">Check your Notion database for the test entry.</p>
                   </div>
                 ) : (
-                  <div className="rounded-lg border border-zinc-200 p-8 text-center">
-                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#ea5c1c]/10">
-                      <Send className="h-8 w-8 text-[#ea5c1c]" />
+                  <div className="rounded-2xl border border-zinc-200 p-8 text-center">
+                    <div className="w-16 h-16 rounded-2xl bg-orange-100 flex items-center justify-center mx-auto mb-4">
+                      <Send className="w-8 h-8 text-orange-600" />
                     </div>
-                    <p className="mb-4 text-sm text-zinc-600">Click below to create a test candidate in your Notion database.</p>
-                    <Button onClick={sendTestApplication} disabled={loading} size="lg">
+                    <p className="text-zinc-600 mb-6">Click below to create a test candidate in your database.</p>
+                    <Button onClick={sendTestApplication} disabled={loading} size="lg" className="bg-orange-600 hover:bg-orange-700">
                       {loading ? 'Sending...' : 'Send Test Application'}
                     </Button>
                   </div>
                 )}
 
-                <div className="rounded-lg bg-zinc-50 p-4">
-                  <h3 className="font-medium text-zinc-900">What happens next?</h3>
-                  <ul className="mt-2 space-y-1 text-sm text-zinc-600">
+                <div className="mt-6 p-4 rounded-xl bg-zinc-50 text-sm text-zinc-600">
+                  <p className="font-medium text-zinc-900 mb-2">What happens next:</p>
+                  <ul className="space-y-1 text-zinc-500">
                     <li>1. Share your application link with candidates</li>
-                    <li>2. When they apply, a new entry appears in Notion</li>
-                    <li>3. You&apos;ll receive email notifications for new applications</li>
+                    <li>2. New applications appear automatically in Notion</li>
+                    <li>3. You&apos;ll get email notifications for each submission</li>
                   </ul>
                 </div>
-              </div>
-            </CardContent>
-          )}
-
-          <div className="flex items-center justify-between border-t px-6 py-4">
-            <Button
-              variant="ghost"
-              onClick={handleBack}
-              disabled={currentStep === 1}
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
-            </Button>
-            
-            {currentStep < 4 ? (
-              <Button onClick={currentStep === 2 ? (notionData.connected ? handleNext : connectNotion) : (currentStep === 3 ? validateSetup : handleNext)} disabled={!canProceed()}>
-                {loading ? 'Loading...' : (
-                  <>
-                    {currentStep === 2 ? (notionData.connected ? 'Continue' : 'Connect Notion') : 
-                     currentStep === 3 ? 'Validate Setup' : 'Continue'}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </>
-                )}
-              </Button>
-            ) : currentStep === 4 ? (
-              <Button onClick={handleNext}>
-                Continue
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            ) : (
-              <Link href="/roles">
-                <Button>
-                  Go to Roles
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
+              </CardContent>
             )}
-          </div>
-        </Card>
-      </div>
-    </main>
+
+            <div className="px-8 py-6 border-t border-zinc-100 flex items-center justify-between bg-zinc-50/50">
+              <Button variant="ghost" onClick={handleBack} disabled={currentStep === 1} className="text-zinc-500">
+                <ArrowLeft className="mr-2 w-4 h-4" />
+                Back
+              </Button>
+              
+              {currentStep < 4 && (
+                <Button 
+                  onClick={currentStep === 2 ? (notionData.connected ? handleNext : connectNotion) : (currentStep === 3 ? validateSetup : handleNext)} 
+                  disabled={!canProceed() || loading}
+                  className="bg-zinc-900 hover:bg-zinc-800"
+                >
+                  {loading ? 'Loading...' : currentStep === 2 ? (notionData.connected ? 'Continue' : 'Connect') : 
+                   currentStep === 3 ? (setupValidated ? 'Continue' : 'Validate') : 'Continue'}
+                  <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              )}
+              {currentStep === 4 && (
+                <Button onClick={handleNext} className="bg-zinc-900 hover:bg-zinc-800">
+                  Continue
+                  <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              )}
+              {currentStep === 5 && (
+                <Link href="/roles">
+                  <Button className="bg-orange-600 hover:bg-orange-700">
+                    View Your Roles
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </Link>
+              )}
+            </div>
+          </Card>
+        </div>
+      </main>
+    </div>
   );
 }

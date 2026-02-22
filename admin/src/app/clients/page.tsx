@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Search, Eye, Pause, Play } from 'lucide-react';
+import { Search, Eye, Pause, Play, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -30,73 +30,82 @@ export default function ClientsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900">Clients</h1>
-          <p className="mt-1 text-sm text-zinc-500">Manage your client accounts</p>
+          <p className="mt-1 text-sm text-zinc-500">Manage and monitor all client accounts</p>
         </div>
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <CardTitle>All Clients</CardTitle>
+      <Card className="border-zinc-200 shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b border-zinc-100">
+          <CardTitle className="text-base font-semibold">All Clients</CardTitle>
           <div className="relative w-72">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-            <Input placeholder="Search by company or slug..." className="pl-9" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+            <Input placeholder="Search clients..." className="pl-9 h-9 bg-zinc-50 border-zinc-200" />
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b text-left text-sm text-zinc-500">
-                  <th className="pb-3 font-medium">Company</th>
-                  <th className="pb-3 font-medium">Slug</th>
-                  <th className="pb-3 font-medium">Product</th>
-                  <th className="pb-3 font-medium">Status</th>
-                  <th className="pb-3 font-medium">Setup</th>
-                  <th className="pb-3 font-medium">Emails</th>
-                  <th className="pb-3 font-medium">Last Webhook</th>
-                  <th className="pb-3 font-medium"></th>
+                <tr className="border-b border-zinc-100 bg-zinc-50/50 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                  <th className="px-6 py-3">Company</th>
+                  <th className="px-6 py-3">Slug</th>
+                  <th className="px-6 py-3">Product</th>
+                  <th className="px-6 py-3">Status</th>
+                  <th className="px-6 py-3">Setup</th>
+                  <th className="px-6 py-3">Emails</th>
+                  <th className="px-6 py-3">Last Webhook</th>
+                  <th className="px-6 py-3"></th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-zinc-100">
                 {MOCK_CLIENTS.map((client) => (
-                  <tr key={client.id} className="border-b last:border-0 hover:bg-zinc-50">
-                    <td className="py-4">
-                      <Link href={`/clients/${client.slug}`} className="font-medium text-zinc-900 hover:text-[#ea5c1c]">
+                  <tr key={client.id} className="hover:bg-zinc-50/80 transition-colors">
+                    <td className="px-6 py-4">
+                      <Link href={`/clients/${client.slug}`} className="font-medium text-zinc-900 hover:text-orange-600 transition-colors">
                         {client.companyName}
                       </Link>
                     </td>
-                    <td className="py-4">
-                      <code className="text-sm text-zinc-600">{client.slug}</code>
+                    <td className="px-6 py-4">
+                      <code className="text-xs text-zinc-500 bg-zinc-100 px-2 py-1 rounded">{client.slug}</code>
                     </td>
-                    <td className="py-4">
-                      <Badge variant="secondary">{client.productType}</Badge>
+                    <td className="px-6 py-4">
+                      <Badge variant="secondary" className="text-xs font-medium">{client.productType}</Badge>
                     </td>
-                    <td className="py-4">
-                      <Badge variant={client.status === 'active' ? 'success' : 'destructive'}>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${
+                        client.status === 'active' 
+                          ? 'bg-emerald-50 text-emerald-700' 
+                          : 'bg-red-50 text-red-700'
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${client.status === 'active' ? 'bg-emerald-500' : 'bg-red-500'}`} />
                         {client.status === 'active' ? 'Active' : 'Suspended'}
-                      </Badge>
+                      </span>
                     </td>
-                    <td className="py-4">
+                    <td className="px-6 py-4">
                       {client.setupComplete ? (
-                        <Badge variant="success">Yes</Badge>
+                        <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-medium">
+                          <Check className="w-3 h-3" /> Complete
+                        </span>
                       ) : (
-                        <Badge variant="warning">Incomplete</Badge>
+                        <span className="inline-flex items-center gap-1 text-xs text-amber-600 font-medium">
+                          Incomplete
+                        </span>
                       )}
                     </td>
-                    <td className="py-4 text-sm text-zinc-600">{client.emailsSent}</td>
-                    <td className="py-4 text-sm text-zinc-600">{client.lastWebhook}</td>
-                    <td className="py-4">
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm" asChild>
+                    <td className="px-6 py-4 text-sm text-zinc-600">{client.emailsSent}</td>
+                    <td className="px-6 py-4 text-sm text-zinc-500">{client.lastWebhook}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
                           <Link href={`/clients/${client.slug}`}>
                             <Eye className="h-4 w-4" />
                           </Link>
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                           {client.status === 'active' ? (
-                            <Pause className="h-4 w-4" />
+                            <Pause className="h-4 w-4 text-amber-600" />
                           ) : (
-                            <Play className="h-4 w-4" />
+                            <Play className="h-4 w-4 text-emerald-600" />
                           )}
                         </Button>
                       </div>
@@ -107,11 +116,11 @@ export default function ClientsPage() {
             </table>
           </div>
 
-          <div className="mt-4 flex items-center justify-between">
+          <div className="px-6 py-4 border-t border-zinc-100 flex items-center justify-between bg-zinc-50/50">
             <p className="text-sm text-zinc-500">Showing {MOCK_CLIENTS.length} clients</p>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" disabled>Previous</Button>
-              <Button variant="outline" size="sm" disabled>Next</Button>
+              <Button variant="outline" size="sm" disabled className="h-8">Previous</Button>
+              <Button variant="outline" size="sm" disabled className="h-8">Next</Button>
             </div>
           </div>
         </CardContent>

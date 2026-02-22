@@ -1,160 +1,138 @@
 import Link from 'next/link';
-import { CheckCircle2, ArrowRight, Zap, Shield, Users } from 'lucide-react';
+import { ArrowRight, Check, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function Home() {
   return (
-    <main className="min-h-screen">
-      <header className="sticky top-0 z-30 border-b bg-white/80 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-          <Link href="/" className="text-xl font-bold text-zinc-900">
-            Simple Hiring
+    <div className="min-h-screen bg-[#fafafa]">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-zinc-100">
+        <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">
+              <span className="text-white font-bold text-sm">SH</span>
+            </div>
+            <span className="text-lg font-semibold text-zinc-900">Simple Hiring</span>
           </Link>
-          <nav className="flex items-center gap-6 text-sm font-medium text-zinc-600">
-            <Link href="#how-it-works" className="hover:text-zinc-900">How It Works</Link>
-            <Link href="#who-its-for" className="hover:text-zinc-900">Who It&apos;s For</Link>
-            <Link href="#pricing" className="hover:text-zinc-900">Pricing</Link>
+          <nav className="flex items-center gap-8">
+            <a href="#how-it-works" className="text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors">How It Works</a>
+            <a href="#pricing" className="text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors">Pricing</a>
             <Link href="/onboarding">
-              <Button size="sm">Get Started</Button>
+              <Button className="rounded-full px-5 h-9 bg-zinc-900 hover:bg-zinc-800">Start Setup</Button>
             </Link>
           </nav>
         </div>
       </header>
 
-      <section className="relative overflow-hidden py-20 md:py-32">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(234,92,28,0.08),transparent_50%)]" />
-        <div className="relative mx-auto max-w-6xl px-4 text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-zinc-900 md:text-6xl lg:text-7xl">
-            Hiring in Notion.{' '}
-            <span className="text-[#ea5c1c]">Without the mess.</span>
-          </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 md:text-xl">
-            Collect applications. Auto-create candidates. Send confirmations.
-            All inside Notion — no spreadsheets, no extra tools.
-          </p>
-          <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Link href="/onboarding">
-              <Button size="lg" className="h-12 px-8 text-base">
-                Get Started <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <section id="how-it-works" className="py-20 bg-zinc-50">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-zinc-900 md:text-4xl">How It Works</h2>
-            <p className="mt-4 text-lg text-zinc-600">Three simple steps. Done in under 15 minutes.</p>
-          </div>
-          <div className="grid gap-8 md:grid-cols-3">
-            {[
-              {
-                step: '01',
-                title: 'Connect Notion',
-                description: 'Sign in with your Notion account. We only access what we need.',
-                icon: <Zap className="h-6 w-6" />,
-              },
-              {
-                step: '02',
-                title: 'Select Your Databases',
-                description: 'Pick your Candidates, Roles, and Stages databases. We validate everything works.',
-                icon: <Shield className="h-6 w-6" />,
-              },
-              {
-                step: '03',
-                title: 'Share Your Link',
-                description: 'Get your application link. Start receiving candidates instantly.',
-                icon: <Users className="h-6 w-6" />,
-              },
-            ].map((item) => (
-              <Card key={item.step} className="border-0 bg-white shadow-sm">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <span className="text-5xl font-bold text-zinc-100">{item.step}</span>
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#ea5c1c]/10 text-[#ea5c1c]">
-                      {item.icon}
-                    </div>
-                  </div>
-                  <CardTitle className="mt-4 text-xl">{item.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-base">{item.description}</CardDescription>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="who-its-for" className="py-20">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-zinc-900 md:text-4xl">Who It&apos;s For</h2>
-            <p className="mt-4 text-lg text-zinc-600">Perfect for teams that already love Notion.</p>
-          </div>
-          <div className="flex flex-wrap justify-center gap-4">
-            {['Small teams', 'Agencies', 'Salons', 'Startups', 'Freelancers', 'Clinics'].map((item) => (
-              <div
-                key={item}
-                className="rounded-full border bg-white px-6 py-3 text-sm font-medium text-zinc-700 shadow-sm"
-              >
-                {item}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="pricing" className="py-20 bg-zinc-50">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-zinc-900 md:text-4xl">Simple Pricing</h2>
-            <p className="mt-4 text-lg text-zinc-600">One price. No subscriptions. No surprises.</p>
-          </div>
-          <div className="mx-auto max-w-md">
-            <Card className="border-2 border-[#ea5c1c] bg-white shadow-lg">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl">One-Time Purchase</CardTitle>
-                <div className="mt-4 text-5xl font-bold text-zinc-900">
-                  $300<span className="text-lg font-normal text-zinc-500"></span>
-                </div>
-                <CardDescription className="mt-2">Pay once. Use forever.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {[
-                  'Unlimited candidates',
-                  'Unlimited roles',
-                  'Email notifications',
-                  'Webhook integrations',
-                  'Notion OAuth',
-                  'Priority support',
-                ].map((feature) => (
-                  <div key={feature} className="flex items-center gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-[#ea5c1c]" />
-                    <span className="text-zinc-700">{feature}</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      <footer className="border-t bg-white py-12">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
-            <div className="flex items-center gap-6 text-sm text-zinc-500">
-              <Link href="#" className="hover:text-zinc-900">Privacy</Link>
-              <Link href="#" className="hover:text-zinc-900">Terms</Link>
-              <span>Built by SAI Technology</span>
+      <main>
+        <section className="pt-40 pb-24 px-6">
+          <div className="mx-auto max-w-4xl text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-50 border border-orange-100 mb-8">
+              <Sparkles className="w-4 h-4 text-orange-600" />
+              <span className="text-sm font-medium text-orange-700">Now with Notion 2.0 integration</span>
             </div>
-            <p className="text-sm text-zinc-400">© 2026 Simple Hiring. All rights reserved.</p>
+            
+            <h1 className="text-5xl md:text-7xl font-bold text-zinc-900 tracking-tight leading-[1.1]">
+              Hiring that actually{' '}
+              <span className="text-orange-600">works.</span>
+            </h1>
+            
+            <p className="mt-6 text-xl text-zinc-500 max-w-2xl mx-auto leading-relaxed">
+              Collect applications, auto-create candidates, and send confirmations — 
+              all automatically added to your Notion workspace.
+            </p>
+            
+            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link href="/onboarding">
+                <Button size="lg" className="rounded-full h-12 px-8 text-base bg-orange-600 hover:bg-orange-700 shadow-lg shadow-orange-600/25">
+                  Start Free Setup <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              </Link>
+              <Button variant="outline" size="lg" className="rounded-full h-12 px-8 text-base border-zinc-200">
+                See How It Works
+              </Button>
+            </div>
+
+            <p className="mt-6 text-sm text-zinc-400">No credit card required · Setup in 5 minutes</p>
           </div>
+        </section>
+
+        <section id="how-it-works" className="py-24 px-6 bg-white">
+          <div className="mx-auto max-w-6xl">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold text-zinc-900">Simple. Powerful. Notion-native.</h2>
+              <p className="mt-3 text-lg text-zinc-500">Three steps from start to hiring your first candidate.</p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              {[
+                { step: '01', title: 'Connect Notion', desc: 'Sign in with Notion. We request minimal permissions — just enough to manage your hiring data.' },
+                { step: '02', title: 'Pick Databases', desc: 'Select your Candidates, Roles, and Stages databases. We validate everything works perfectly.' },
+                { step: '03', title: 'Share Link', desc: 'Get your application URL. Candidates apply, you get notified, data appears in Notion.' },
+              ].map((item, i) => (
+                <div key={item.step} className="relative group">
+                  <div className="absolute inset-0 bg-gradient-to-b from-orange-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
+                  <div className="relative p-8 rounded-2xl border border-zinc-100 bg-white hover:shadow-xl hover:shadow-zinc-100/50 transition-all duration-300">
+                    <span className="text-6xl font-bold text-zinc-100">{item.step}</span>
+                    <h3 className="mt-4 text-xl font-semibold text-zinc-900">{item.title}</h3>
+                    <p className="mt-3 text-zinc-500 leading-relaxed">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="py-24 px-6">
+          <div className="mx-auto max-w-4xl">
+            <div className="rounded-3xl bg-zinc-900 text-white p-12 md:p-16 text-center relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 to-transparent" />
+              <div className="relative">
+                <h2 className="text-3xl md:text-4xl font-bold">One price. Forever.</h2>
+                <p className="mt-3 text-zinc-400 text-lg">No monthly fees. No surprises. Just one payment.</p>
+                
+                <div className="mt-10 flex items-center justify-center gap-2">
+                  <span className="text-6xl font-bold">$300</span>
+                  <span className="text-zinc-400 text-lg">one-time</span>
+                </div>
+                
+                <ul className="mt-10 flex flex-wrap justify-center gap-4">
+                  {['Unlimited candidates', 'Unlimited roles', 'Email notifications', 'Webhook integrations', 'Priority support'].map((feat) => (
+                    <li key={feat} className="flex items-center gap-2 text-zinc-300">
+                      <Check className="w-5 h-5 text-orange-500" /> {feat}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="py-24 px-6 bg-white">
+          <div className="mx-auto max-w-3xl text-center">
+            <h2 className="text-3xl font-bold text-zinc-900">Ready to simplify your hiring?</h2>
+            <p className="mt-3 text-lg text-zinc-500">Join hundreds of small teams already using Simple Hiring.</p>
+            <div className="mt-8">
+              <Link href="/onboarding">
+                <Button size="lg" className="rounded-full h-12 px-8 text-base bg-orange-600 hover:bg-orange-700">
+                  Get Started Free <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer className="py-8 px-6 border-t">
+        <div className="mx-auto max-w-6xl flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4 text-sm text-zinc-500">
+            <Link href="#" className="hover:text-zinc-900">Privacy</Link>
+            <Link href="#" className="hover:text-zinc-900">Terms</Link>
+            <span>·</span>
+            <span>Built by SAI Technology</span>
+          </div>
+          <p className="text-sm text-zinc-400">© 2026 Simple Hiring</p>
         </div>
       </footer>
-    </main>
+    </div>
   );
 }
