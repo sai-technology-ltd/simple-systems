@@ -1,114 +1,83 @@
 import Link from 'next/link';
-import { Copy, ExternalLink } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Copy, Users, Globe } from 'lucide-react';
 
-interface Role {
-  id: string;
-  name: string;
-  status: 'active' | 'paused';
-  slug: string;
-  applicationLink: string;
-}
-
-const MOCK_ROLES: Role[] = [
-  { id: '1', name: 'Nail Technician', status: 'active', slug: 'nail-technician', applicationLink: 'https://simplehiring.app/apply/demo-co/nail-technician' },
-  { id: '2', name: 'Front Desk Manager', status: 'active', slug: 'front-desk-manager', applicationLink: 'https://simplehiring.app/apply/demo-co/front-desk-manager' },
-  { id: '3', name: 'Esthetician', status: 'paused', slug: 'esthetician', applicationLink: 'https://simplehiring.app/apply/demo-co/esthetician' },
+const ROLES = [
+  { id: '1', name: 'Nail Technician', status: 'active', applicants: 12, lastApplied: '2 hours ago' },
+  { id: '2', name: 'Front Desk Manager', status: 'active', applicants: 8, lastApplied: '1 day ago' },
+  { id: '3', name: 'Esthetician', status: 'paused', applicants: 0, lastApplied: 'Never' },
 ];
 
 export default function RolesPage() {
-  const copyLink = (link: string) => {
-    navigator.clipboard.writeText(link);
-  };
-
   return (
-    <main className="min-h-screen bg-zinc-50 py-8">
-      <div className="mx-auto max-w-5xl px-4">
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <Link href="/onboarding" className="text-sm font-medium text-zinc-500 hover:text-zinc-900">
-              ← Back to Setup
-            </Link>
-            <h1 className="mt-2 text-2xl font-bold text-zinc-900">Your Roles</h1>
-            <p className="mt-1 text-sm text-zinc-500">View and manage your open positions.</p>
-          </div>
+    <div className="min-h-screen bg-white">
+      <header className="bg-white border-b border-zinc-100">
+        <div className="mx-auto max-w-5xl px-6 h-14 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">
+              <span className="text-white font-bold text-xs">SH</span>
+            </div>
+            <span className="text-sm font-medium text-zinc-900">Simple Hiring</span>
+          </Link>
+          <Link href="/onboarding" className="text-sm text-zinc-400 hover:text-zinc-600">Back to setup</Link>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-2xl px-6 py-12">
+        <div className="mb-8">
+          <h1 className="text-xl font-semibold text-zinc-900">Your roles</h1>
+          <p className="mt-1 text-sm text-zinc-500">Manage your open positions.</p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Open Positions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b text-left text-sm text-zinc-500">
-                    <th className="pb-3 font-medium">Role Name</th>
-                    <th className="pb-3 font-medium">Status</th>
-                    <th className="pb-3 font-medium">Slug</th>
-                    <th className="pb-3 font-medium">Application Link</th>
-                    <th className="pb-3 font-medium"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {MOCK_ROLES.map((role) => (
-                    <tr key={role.id} className="border-b last:border-0">
-                      <td className="py-4">
-                        <span className="font-medium text-zinc-900">{role.name}</span>
-                      </td>
-                      <td className="py-4">
-                        <Badge variant={role.status === 'active' ? 'success' : 'secondary'}>
-                          {role.status === 'active' ? 'Active' : 'Paused'}
-                        </Badge>
-                      </td>
-                      <td className="py-4">
-                        <code className="text-sm text-zinc-600">{role.slug}</code>
-                      </td>
-                      <td className="py-4">
-                        <code className="text-sm text-[#ea5c1c]">{role.applicationLink}</code>
-                      </td>
-                      <td className="py-4">
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => copyLink(role.applicationLink)}
-                          >
-                            <Copy className="mr-2 h-4 w-4" />
-                            Copy Link
-                          </Button>
-                          <Button variant="ghost" size="sm" asChild>
-                            <a href={role.applicationLink} target="_blank" rel="noopener noreferrer">
-                              <ExternalLink className="h-4 w-4" />
-                            </a>
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+        <div className="space-y-3">
+          {ROLES.map((role) => (
+            <div
+              key={role.id}
+              className="rounded-xl border border-zinc-100 p-4 hover:border-zinc-200 transition-colors"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+                    role.status === 'active' ? 'bg-orange-50' : 'bg-zinc-50'
+                  }`}>
+                    <Users className={`w-4 h-4 ${role.status === 'active' ? 'text-orange-600' : 'text-zinc-400'}`} />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-zinc-900">{role.name}</h3>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className={`text-xs ${role.status === 'active' ? 'text-emerald-600' : 'text-zinc-400'}`}>
+                        {role.status === 'active' ? 'Active' : 'Paused'}
+                      </span>
+                      <span className="text-zinc-200">·</span>
+                      <span className="text-xs text-zinc-400">{role.applicants} applicants</span>
+                    </div>
+                  </div>
+                </div>
 
-            {MOCK_ROLES.length === 0 && (
-              <div className="py-12 text-center">
-                <p className="text-zinc-500">No roles found.</p>
-                <p className="mt-1 text-sm text-zinc-400">Create roles in your Notion database to get started.</p>
+                <button
+                  onClick={() => navigator.clipboard.writeText(`https://simplehiring.app/apply/demo/${role.id}`)}
+                  className="h-8 px-3 rounded-lg border border-zinc-200 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition-colors flex items-center gap-1.5"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  Copy
+                </button>
               </div>
-            )}
-          </CardContent>
-        </Card>
 
-        <div className="mt-6 rounded-lg border border-zinc-200 bg-white p-4">
-          <p className="text-sm text-zinc-600">
-            <strong>Note:</strong> Roles are managed in your Notion workspace. 
-            This page displays a read-only list of your open positions. 
-            To add, edit, or remove roles, update your Roles database in Notion.
+              <div className="mt-3 pt-3 border-t border-zinc-50">
+                <div className="flex items-center gap-1.5 text-xs text-zinc-400">
+                  <Globe className="w-3 h-3" />
+                  <code className="font-mono">simplehiring.app/apply/demo/{role.id}</code>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6 p-4 rounded-xl bg-zinc-50 text-center">
+          <p className="text-xs text-zinc-500">
+            Roles are managed in your Notion workspace.
           </p>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }
