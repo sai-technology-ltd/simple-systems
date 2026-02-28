@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ClientStatus, Prisma, ProductType } from '@prisma/client';
+import { ClientStatus, PaymentStatus, Prisma, ProductType } from '@prisma/client';
 import { randomBytes } from 'crypto';
 import { PrismaService } from './prisma.service';
 
@@ -19,16 +19,10 @@ export class ClientService {
     notionAccessTokenEnc: string;
     notionTokenMeta: Prisma.InputJsonValue;
   }) {
-    return this.prisma.client.update({
-      where: { id: clientId },
-      data,
-    });
+    return this.prisma.client.update({ where: { id: clientId }, data });
   }
 
-  async updateSelectedDatabases(
-    clientId: string,
-    dto: { candidatesDbId: string; rolesDbId: string; stagesDbId: string },
-  ) {
+  async updateSelectedDatabases(clientId: string, dto: { candidatesDbId: string; rolesDbId: string; stagesDbId: string }) {
     return this.prisma.client.update({
       where: { id: clientId },
       data: {
@@ -43,6 +37,7 @@ export class ClientService {
     companyName: string;
     clientSlug: string;
     productType: ProductType;
+    replyToEmail?: string;
   }) {
     return this.prisma.client.create({
       data: {
@@ -50,7 +45,39 @@ export class ClientService {
         clientSlug: input.clientSlug,
         productType: input.productType,
         webhookSecret: randomBytes(32).toString('hex'),
+        replyToEmail: input.replyToEmail,
       },
+    });
+  }
+
+  private slugify(name: string) {
+    return (
+      name
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 40) || 'client'
+    );
+  }
+
+  async createOnboardingClient(input: { companyName: string; replyToEmail?: string; productType?: ProductType }) {
+    const base = this.slugify(input.companyName);
+    let slug = base;
+    let i = 1;
+
+    while (await this.prisma.client.findUnique({ where: { clientSlug: slug } })) {
+      i += 1;
+      slug = `${base}-${i}`;
+    }
+
+    return this.createClient({
+      companyName: input.companyName,
+      clientSlug: slug,
+      productType: input.productType ?? ProductType.HIRING,
+      replyToEmail: input.replyToEmail,
     });
   }
 
@@ -69,6 +96,8 @@ export class ClientService {
         notionDbStagesId: true,
         emailEnabled: true,
         monthlyEmailQuota: true,
+        paymentStatus: true,
+        paymentReference: true,
       },
     });
   }
@@ -102,6 +131,25 @@ export class ClientService {
     });
   }
 
+  async updatePaymentReference(clientId: string, reference: string) {
+    return this.prisma.client.update({
+      where: { id: clientId },
+      data: { paymentReference: reference, paymentStatus: PaymentStatus.PENDING },
+    });
+  }
+
+  async markPaymentPaid(clientId: string, input: { reference: string; email?: string; amountKobo?: number }) {
+    return this.prisma.client.update({
+      where: { id: clientId },
+      data: {
+        paymentStatus: PaymentStatus.PAID,
+        paymentReference: input.reference,
+        paymentEmail: input.email,
+        paymentAmountKobo: input.amountKobo,
+      },
+    });
+  }
+
   async canSendEmail(clientId: string) {
     const client = await this.prisma.client.findUnique({ where: { id: clientId } });
     if (!client) return { ok: false, reason: 'CLIENT_NOT_FOUND' };
@@ -118,10 +166,7 @@ export class ClientService {
       count = 0;
     }
 
-    if (count >= client.monthlyEmailQuota) {
-      return { ok: false, reason: 'QUOTA_EXCEEDED' };
-    }
-
+    if (count >= client.monthlyEmailQuota) return { ok: false, reason: 'QUOTA_EXCEEDED' };
     return { ok: true, reason: 'OK' };
   }
 
@@ -132,4 +177,3 @@ export class ClientService {
     });
   }
 }
-

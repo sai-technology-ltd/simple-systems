@@ -19,6 +19,12 @@ enum ClientStatus {
   DELETED
 }
 
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
 model Client {
   id                   String       @id @default(uuid())
   productType          ProductType
@@ -44,6 +50,11 @@ model Client {
   emailsSentMonthKey   String?
 
   webhookSecret        String
+
+  paymentStatus        PaymentStatus @default(PENDING)
+  paymentEmail         String?
+  paymentReference     String?
+  paymentAmountKobo    Int?
 
   createdAt            DateTime     @default(now())
   updatedAt            DateTime     @updatedAt

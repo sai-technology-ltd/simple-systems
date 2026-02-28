@@ -18,6 +18,9 @@ import { SchemaValidatorService } from './notion/schema-validator.service';
 import { ClientsController } from './clients/clients.controller';
 import { ClientSettingsController } from './clients/client-settings.controller';
 import { ApplyController } from './clients/apply.controller';
+import { OnboardingController } from './clients/onboarding.controller';
+import { PaymentsController } from './payments/payments.controller';
+import { PaymentsService } from './payments/payments.service';
 import { WebhookAuthService } from './webhooks/webhook-auth.service';
 import { HiringIntakeService } from './webhooks/hiring-intake.service';
 import { HiringIntakeController } from './webhooks/hiring-intake.controller';
@@ -64,6 +67,8 @@ import { AdminController } from './admin/admin.controller';
     ClientsController,
     ClientSettingsController,
     ApplyController,
+    OnboardingController,
+    PaymentsController,
     HiringIntakeController,
     AdminController,
   ],
@@ -79,6 +84,7 @@ import { AdminController } from './admin/admin.controller';
     WebhookAuthService,
     HiringIntakeService,
     EmailService,
+    PaymentsService,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
