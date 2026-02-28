@@ -7,7 +7,7 @@ export class InitializePaymentDto {
   @IsOptional()
   @IsInt()
   @Min(100)
-  amountKobo?: number;
+  amountMinor?: number;
 
   @IsOptional()
   @IsString()

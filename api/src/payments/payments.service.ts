@@ -35,8 +35,16 @@ export class PaymentsService {
     return this.config.get<string>('PAYSTACK_SECRET_KEY');
   }
 
-  private get defaultAmountKobo() {
-    return Number(this.config.get<string>('PAYSTACK_DEFAULT_AMOUNT_KOBO') ?? 500000);
+  private get defaultAmountMinor() {
+    return Number(
+      this.config.get<string>('PAYSTACK_DEFAULT_AMOUNT_MINOR') ??
+        this.config.get<string>('PAYSTACK_DEFAULT_AMOUNT_KOBO') ??
+        500000,
+    );
+  }
+
+  private get currency() {
+    return (this.config.get<string>('PAYSTACK_CURRENCY') ?? 'GHS').toUpperCase();
   }
 
   private assertEnabled() {
@@ -59,18 +67,19 @@ export class PaymentsService {
     return json;
   }
 
-  async initialize(clientSlug: string, input: { email: string; amountKobo?: number; callbackUrl?: string }) {
+  async initialize(clientSlug: string, input: { email: string; amountMinor?: number; callbackUrl?: string }) {
     const client = await this.clients.findActiveBySlug(clientSlug);
     if (!client) throw new BadRequestException('Client not found');
 
     const reference = `ss_${clientSlug}_${Date.now()}`;
-    const amount = input.amountKobo ?? this.defaultAmountKobo;
+    const amount = input.amountMinor ?? this.defaultAmountMinor;
 
     const result = await this.paystackRequest<InitResponse>('/transaction/initialize', {
       method: 'POST',
       body: JSON.stringify({
         email: input.email,
         amount,
+        currency: this.currency,
         reference,
         callback_url: input.callbackUrl,
         metadata: { clientSlug, productType: client.productType },
@@ -85,7 +94,8 @@ export class PaymentsService {
       reference: result.data.reference,
       authorizationUrl: result.data.authorization_url,
       accessCode: result.data.access_code,
-      amountKobo: amount,
+      amountMinor: amount,
+      currency: this.currency,
     };
   }
 
@@ -100,7 +110,7 @@ export class PaymentsService {
       await this.clients.markPaymentPaid(client.id, {
         reference: result.data.reference,
         email: result.data.customer?.email,
-        amountKobo: result.data.amount,
+        amountMinor: result.data.amount,
       });
     }
 
@@ -108,7 +118,8 @@ export class PaymentsService {
       paid,
       status: result.data.status,
       reference: result.data.reference,
-      amountKobo: result.data.amount,
+      amountMinor: result.data.amount,
+      currency: this.currency,
       paidAt: result.data.paid_at ?? null,
     };
   }
