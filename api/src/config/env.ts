@@ -14,7 +14,9 @@ const envSchema = z.object({
   POSTMARK_SERVER_TOKEN: z.string().optional(),
   OAUTH_STATE_SECRET: z.string().optional(),
   PAYSTACK_SECRET_KEY: z.string().optional(),
-  PAYSTACK_DEFAULT_AMOUNT_KOBO: z.coerce.number().optional(),
+  PAYSTACK_DEFAULT_AMOUNT_MINOR: z.coerce.number().optional(),
+  PAYSTACK_DEFAULT_AMOUNT_KOBO: z.coerce.number().optional(), // backward compatibility
+  PAYSTACK_CURRENCY: z.string().default('GHS'),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;

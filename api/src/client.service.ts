@@ -138,14 +138,14 @@ export class ClientService {
     });
   }
 
-  async markPaymentPaid(clientId: string, input: { reference: string; email?: string; amountKobo?: number }) {
+  async markPaymentPaid(clientId: string, input: { reference: string; email?: string; amountMinor?: number }) {
     return this.prisma.client.update({
       where: { id: clientId },
       data: {
         paymentStatus: PaymentStatus.PAID,
         paymentReference: input.reference,
         paymentEmail: input.email,
-        paymentAmountKobo: input.amountKobo,
+        paymentAmountKobo: input.amountMinor,
       },
     });
   }
