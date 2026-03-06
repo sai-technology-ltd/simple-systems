@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Toggle } from "@/components/ui/toggle";
 import { SetupStepper } from "@/components/setup-stepper";
 import { StatusBanner } from "@/components/status-banner";
+import { useToast } from "@/components/ui/toast";
 import { apiGet, apiPatch, apiPost, apiPostWithoutBody } from "@/lib/api";
 import type {
   DatabaseOption,
@@ -138,6 +139,15 @@ function databaseSelectionStatus(
   };
 }
 
+const VALIDATION_DATABASE_LABELS: Record<
+  Exclude<ValidationResult["issues"][number]["database"], "workspace">,
+  string
+> = {
+  candidates: "Candidates",
+  roles: "Roles",
+  stages: "Stages",
+};
+
 export default function OnboardingPage() {
   const [clientSlug, setClientSlug] = useState("");
   const [workspace, setWorkspace] = useState<WorkspaceSummary | null>(null);
@@ -157,6 +167,7 @@ export default function OnboardingPage() {
   const [replyToEmail, setReplyToEmail] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
   const [emailEnabled, setEmailEnabled] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -171,7 +182,7 @@ export default function OnboardingPage() {
     if (reference) {
       setPaymentReference(reference);
     }
-  }, []);
+  }, [toast]);
 
   const loadWorkspace = useCallback(async (slug: string, silent: boolean) => {
     if (!silent) {
@@ -224,13 +235,15 @@ export default function OnboardingPage() {
         });
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to load workspace.");
+      const message = err instanceof Error ? err.message : "Unable to load workspace.";
+      setError(message);
+      toast({ tone: "error", title: message });
     } finally {
       if (!silent) {
         setLoadingWorkspace(false);
       }
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     if (!clientSlug) {
@@ -287,9 +300,16 @@ export default function OnboardingPage() {
       );
 
       setFormMessage("Company details saved. Next, connect your Notion workspace.");
+      toast({
+        tone: "success",
+        title: "Company details saved",
+        description: "Next, connect your Notion workspace.",
+      });
       await loadWorkspace(slug, true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to save your settings.");
+      const message = err instanceof Error ? err.message : "Unable to save your settings.";
+      setError(message);
+      toast({ tone: "error", title: message });
     } finally {
       setSaving(false);
     }
@@ -297,7 +317,9 @@ export default function OnboardingPage() {
 
   async function handleConnectNotion() {
     if (!clientSlug) {
-      setError("Save your company details first.");
+      const message = "Save your company details first.";
+      setError(message);
+      toast({ tone: "error", title: message });
       return;
     }
 
@@ -315,7 +337,9 @@ export default function OnboardingPage() {
 
       window.location.href = response.authorizationUrl;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to connect your workspace.");
+      const message = err instanceof Error ? err.message : "Unable to connect your workspace.";
+      setError(message);
+      toast({ tone: "error", title: message });
       setSaving(false);
     }
   }
@@ -340,9 +364,16 @@ export default function OnboardingPage() {
         "We couldn't save your database selection."
       );
       setFormMessage("Database selection saved. Validate setup to make sure everything is ready.");
+      toast({
+        tone: "success",
+        title: "Database selection saved",
+        description: "Validate setup to make sure everything is ready.",
+      });
       await loadWorkspace(clientSlug, true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to save your database selection.");
+      const message = err instanceof Error ? err.message : "Unable to save your database selection.";
+      setError(message);
+      toast({ tone: "error", title: message });
     } finally {
       setSaving(false);
     }
@@ -382,10 +413,22 @@ export default function OnboardingPage() {
       setValidation(result);
 
       if (result.ok) {
+        toast({
+          tone: "success",
+          title: result.message || "Setup validated",
+        });
         await loadWorkspace(clientSlug, true);
+      } else {
+        toast({
+          tone: "error",
+          title: result.message || "Setup still needs attention",
+          description: result.issues[0]?.message,
+        });
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to validate your setup.");
+      const message = err instanceof Error ? err.message : "Unable to validate your setup.";
+      setError(message);
+      toast({ tone: "error", title: message });
     } finally {
       setValidating(false);
     }
@@ -393,7 +436,9 @@ export default function OnboardingPage() {
 
   async function beginPayment() {
     if (!clientSlug || !replyToEmail) {
-      setError("Add your reply-to email before activation.");
+      const message = "Add your reply-to email before activation.";
+      setError(message);
+      toast({ tone: "error", title: message });
       return;
     }
 
@@ -412,7 +457,9 @@ export default function OnboardingPage() {
 
       window.location.href = response.authorizationUrl;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to start payment.");
+      const message = err instanceof Error ? err.message : "Unable to start payment.";
+      setError(message);
+      toast({ tone: "error", title: message });
       setSaving(false);
     }
   }
@@ -441,16 +488,23 @@ export default function OnboardingPage() {
 
       await loadWorkspace(clientSlug, true);
       setFormMessage("Payment confirmed. Your workspace is now active.");
+      toast({
+        tone: "success",
+        title: "Payment confirmed",
+        description: "Your workspace is now active.",
+      });
     } catch (err) {
       if (!silent) {
-        setError(err instanceof Error ? err.message : "Unable to verify payment.");
+        const message = err instanceof Error ? err.message : "Unable to verify payment.";
+        setError(message);
+        toast({ tone: "error", title: message });
       }
     } finally {
       if (!silent) {
         setSaving(false);
       }
     }
-  }, [clientSlug, paymentReference, loadWorkspace]);
+  }, [clientSlug, paymentReference, loadWorkspace, toast]);
 
   useEffect(() => {
     if (!clientSlug || !paymentReference) {
@@ -475,8 +529,14 @@ export default function OnboardingPage() {
         "We couldn't send a test application right now."
       );
       setFormMessage(response.message || "Test application sent successfully.");
+      toast({
+        tone: "success",
+        title: response.message || "Test application sent successfully.",
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to send a test submission.");
+      const message = err instanceof Error ? err.message : "Unable to send a test submission.";
+      setError(message);
+      toast({ tone: "error", title: message });
     } finally {
       setTesting(false);
     }
@@ -503,6 +563,26 @@ export default function OnboardingPage() {
           : "Not started";
   const selectionState = databaseSelectionStatus(selection, workspace);
   const selectionComplete = hasCompleteSelection(selection);
+  const groupedValidationIssues = useMemo(() => {
+    if (!validation?.issues?.length) {
+      return [];
+    }
+
+    const groups = new Map<string, string[]>();
+
+    for (const issue of validation.issues) {
+      const key =
+        issue.database === "workspace"
+          ? "workspace"
+          : VALIDATION_DATABASE_LABELS[issue.database];
+      groups.set(key, [...(groups.get(key) || []), issue.message]);
+    }
+
+    return Array.from(groups.entries()).map(([database, issues]) => ({
+      database,
+      issues,
+    }));
+  }, [validation]);
 
   return (
     <div className="min-h-screen bg-transparent">
@@ -754,12 +834,33 @@ export default function OnboardingPage() {
                             }
                           />
                           {validation.issues.length ? (
-                            <div className="rounded-xl border border-slate-200 bg-[rgb(var(--warning-soft))] p-4">
-                              <ul className="space-y-2 text-sm text-slate-800">
-                                {validation.issues.map((issue) => (
-                                  <li key={`${issue.database}-${issue.message}`}>{issue.message}</li>
-                                ))}
-                              </ul>
+                            <div className="grid gap-3 md:grid-cols-2">
+                              {groupedValidationIssues.map((group) => (
+                                <div
+                                  key={group.database}
+                                  className="rounded-xl border border-slate-200 bg-[rgb(var(--warning-soft))] p-4"
+                                >
+                                  <div className="flex items-center justify-between gap-3">
+                                    <p className="text-sm font-semibold text-slate-800">
+                                      {group.database}
+                                    </p>
+                                    <span className="rounded-full bg-white/70 px-2.5 py-1 text-xs font-medium text-slate-600">
+                                      {group.issues.length} fix
+                                      {group.issues.length === 1 ? "" : "es"}
+                                    </span>
+                                  </div>
+                                  <ul className="mt-3 space-y-2 text-sm text-slate-700">
+                                    {group.issues.map((message) => (
+                                      <li
+                                        key={`${group.database}-${message}`}
+                                        className="rounded-lg bg-white/55 px-3 py-2"
+                                      >
+                                        {message}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ))}
                             </div>
                           ) : null}
                         </div>

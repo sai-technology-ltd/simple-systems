@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { apiGet, apiPatch } from "@/lib/api";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Toggle } from "@/components/ui/toggle";
+import { useToast } from "@/components/ui/toast";
 import type { WorkspaceSummary } from "@/lib/contracts";
 import { readStoredClientSlug } from "@/lib/workspace-storage";
 
@@ -22,20 +23,9 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const { toast } = useToast();
 
-  useEffect(() => {
-    const slug = readStoredClientSlug();
-    setClientSlug(slug);
-
-    if (!slug) {
-      setLoading(false);
-      return;
-    }
-
-    void loadSettings(slug);
-  }, []);
-
-  async function loadSettings(slug: string) {
+  const loadSettings = useCallback(async (slug: string) => {
     setLoading(true);
     try {
       const workspace = await apiGet<WorkspaceSummary>(
@@ -47,17 +37,33 @@ export default function SettingsPage() {
       setLogoUrl(workspace.settings.logoUrl || "");
       setEmailEnabled(workspace.settings.emailEnabled);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to load settings.");
+      const message = err instanceof Error ? err.message : "Unable to load settings.";
+      setError(message);
+      toast({ tone: "error", title: message });
     } finally {
       setLoading(false);
     }
-  }
+  }, [toast]);
+
+  useEffect(() => {
+    const slug = readStoredClientSlug();
+    setClientSlug(slug);
+
+    if (!slug) {
+      setLoading(false);
+      return;
+    }
+
+    void loadSettings(slug);
+  }, [loadSettings]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!clientSlug) {
-      setError("Start onboarding before editing settings.");
+      const message = "Start onboarding before editing settings.";
+      setError(message);
+      toast({ tone: "error", title: message });
       return;
     }
 
@@ -77,8 +83,11 @@ export default function SettingsPage() {
         "We couldn't save your settings."
       );
       setMessage("Settings saved.");
+      toast({ tone: "success", title: "Settings saved." });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to save settings.");
+      const message = err instanceof Error ? err.message : "Unable to save settings.";
+      setError(message);
+      toast({ tone: "error", title: message });
     } finally {
       setSaving(false);
     }

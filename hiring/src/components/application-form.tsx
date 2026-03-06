@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatusBanner } from "@/components/status-banner";
+import { useToast } from "@/components/ui/toast";
 import { apiPost } from "@/lib/api";
 
 interface ApplicationFormProps {
@@ -20,6 +21,7 @@ export function ApplicationForm({
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -48,8 +50,15 @@ export function ApplicationForm({
         cvUrl: "",
         notes: "",
       });
+      toast({
+        tone: "success",
+        title: "Application received",
+        description: "We’ve sent it to the hiring workspace.",
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to submit application.");
+      const message = err instanceof Error ? err.message : "Unable to submit application.";
+      setError(message);
+      toast({ tone: "error", title: message });
     } finally {
       setLoading(false);
     }

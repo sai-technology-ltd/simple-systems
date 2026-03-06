@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ArrowRight, CheckCircle2, ExternalLink, Mail, RefreshCw } from "lucide-react";
 import { CopyField } from "@/components/ui/copy-field";
 import { Button } from "@/components/ui/button";
 import { StatusBanner } from "@/components/status-banner";
+import { useToast } from "@/components/ui/toast";
 import { apiGet, apiPostWithoutBody } from "@/lib/api";
 import type { RoleSummary, TestSubmissionResponse, WorkspaceSummary } from "@/lib/contracts";
 import { readStoredClientSlug } from "@/lib/workspace-storage";
@@ -20,20 +21,9 @@ export default function RolesPage() {
   const [testing, setTesting] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const { toast } = useToast();
 
-  useEffect(() => {
-    const slug = readStoredClientSlug();
-    setClientSlug(slug);
-
-    if (!slug) {
-      setLoading(false);
-      return;
-    }
-
-    void loadWorkspace(slug);
-  }, []);
-
-  async function loadWorkspace(slug: string) {
+  const loadWorkspace = useCallback(async (slug: string) => {
     setLoading(true);
     setError("");
 
@@ -52,11 +42,25 @@ export default function RolesPage() {
       setWorkspace(workspaceData);
       setRoles(rolesData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to load workspace.");
+      const message = err instanceof Error ? err.message : "Unable to load workspace.";
+      setError(message);
+      toast({ tone: "error", title: message });
     } finally {
       setLoading(false);
     }
-  }
+  }, [toast]);
+
+  useEffect(() => {
+    const slug = readStoredClientSlug();
+    setClientSlug(slug);
+
+    if (!slug) {
+      setLoading(false);
+      return;
+    }
+
+    void loadWorkspace(slug);
+  }, [loadWorkspace]);
 
   async function handleTestSubmission() {
     if (!clientSlug) {
@@ -73,8 +77,14 @@ export default function RolesPage() {
         "We couldn't send a test application."
       );
       setMessage(response.message || "Test application sent.");
+      toast({
+        tone: "success",
+        title: response.message || "Test application sent.",
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to send a test application.");
+      const message = err instanceof Error ? err.message : "Unable to send a test application.";
+      setError(message);
+      toast({ tone: "error", title: message });
     } finally {
       setTesting(false);
     }
