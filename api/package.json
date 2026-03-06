@@ -82,6 +82,32 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "collectCoverageFrom": [
+      "**/*.(t|j)s",
+      "!main.ts",
+      "!**/*.module.ts",
+      "!**/*.dto.ts"
+    ],
+    "coverageThreshold": {
+      "./src/clients/apply.controller.ts": {
+        "branches": 80,
+        "functions": 100,
+        "lines": 95,
+        "statements": 95
+      },
+      "./src/clients/client-workspace.controller.ts": {
+        "branches": 70,
+        "functions": 85,
+        "lines": 85,
+        "statements": 85
+      },
+      "./src/webhooks/hiring-intake.service.ts": {
+        "branches": 75,
+        "functions": 100,
+        "lines": 90,
+        "statements": 90
+      }
+    }
   }
 }

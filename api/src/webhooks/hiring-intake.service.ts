@@ -33,13 +33,15 @@ export class HiringIntakeService {
     const firstStage = stages.results?.[0]?.id;
     if (!firstStage) throw new BadRequestException('No stages found in Stages DB');
 
+    const candidatesDb = (await this.notion.getDatabase(
+      clientSlug,
+      client.notionDbCandidatesId,
+    )) as {
+      properties?: Record<string, { type?: string }>;
+    };
+
     await this.notion.createPage(clientSlug, client.notionDbCandidatesId, {
-      Name: { title: [{ text: { content: dto.candidateName } }] },
-      Email: { email: dto.candidateEmail },
-      Phone: dto.phone ? { rich_text: [{ text: { content: dto.phone } }] } : undefined,
-      'CV URL': dto.cvUrl ? { url: dto.cvUrl } : undefined,
-      Role: { relation: [{ id: dto.roleId }] },
-      Stage: { relation: [{ id: firstStage }] },
+      ...this.buildCandidateProperties(candidatesDb.properties ?? {}, dto, firstStage),
     });
 
     const quota = await this.clients.canSendEmail(client.id);
@@ -61,9 +63,69 @@ export class HiringIntakeService {
         roleId: dto.roleId,
         candidateEmail: dto.candidateEmail,
         submissionId: dto.submissionId,
+        notes: dto.notes,
       },
     });
 
     return { ok: true };
+  }
+
+  private buildCandidateProperties(
+    properties: Record<string, { type?: string }>,
+    dto: HiringIntakeDto,
+    firstStage: string,
+  ) {
+    const payload: Record<string, unknown> = {
+      Name: { title: [{ text: { content: dto.candidateName } }] },
+      Role: { relation: [{ id: dto.roleId }] },
+      Stage: { relation: [{ id: firstStage }] },
+    };
+
+    this.assignTypedValue(payload, properties, 'Email', dto.candidateEmail);
+
+    if (dto.phone) {
+      this.assignTypedValue(payload, properties, 'Phone', dto.phone);
+    }
+
+    if (dto.cvUrl) {
+      this.assignTypedValue(payload, properties, 'CV URL', dto.cvUrl);
+    }
+
+    if (dto.notes) {
+      for (const field of ['Notes', 'Additional Notes', 'Cover Letter', 'Candidate Notes']) {
+        if (properties[field]) {
+          this.assignTypedValue(payload, properties, field, dto.notes);
+          break;
+        }
+      }
+    }
+
+    return payload;
+  }
+
+  private assignTypedValue(
+    payload: Record<string, unknown>,
+    properties: Record<string, { type?: string }>,
+    propertyName: string,
+    value: string,
+  ) {
+    const type = properties[propertyName]?.type;
+
+    if (type === 'email') {
+      payload[propertyName] = { email: value };
+      return;
+    }
+
+    if (type === 'url') {
+      payload[propertyName] = { url: value };
+      return;
+    }
+
+    if (type === 'phone_number') {
+      payload[propertyName] = { phone_number: value };
+      return;
+    }
+
+    payload[propertyName] = { rich_text: [{ text: { content: value } }] };
   }
 }

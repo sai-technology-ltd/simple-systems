@@ -19,6 +19,7 @@ import { ClientsController } from './clients/clients.controller';
 import { ClientSettingsController } from './clients/client-settings.controller';
 import { ApplyController } from './clients/apply.controller';
 import { OnboardingController } from './clients/onboarding.controller';
+import { ClientWorkspaceController } from './clients/client-workspace.controller';
 import { PaymentsController } from './payments/payments.controller';
 import { PaymentsService } from './payments/payments.service';
 import { WebhookAuthService } from './webhooks/webhook-auth.service';
@@ -66,6 +67,7 @@ import { AdminController } from './admin/admin.controller';
     NotionOauthController,
     ClientsController,
     ClientSettingsController,
+    ClientWorkspaceController,
     ApplyController,
     OnboardingController,
     PaymentsController,

@@ -49,9 +49,9 @@ export function EnhancedSelect({ value, onChange, options, placeholder = "Select
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "flex h-11 w-full items-center justify-between rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm",
+          "flex h-11 w-full items-center justify-between rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 transition-[border-color,box-shadow,transform] duration-200",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ea5c1c]/40",
-          "dark:border-zinc-800 dark:bg-zinc-950"
+          "hover:border-zinc-300"
         )}
       >
         <span className={cn("flex items-center gap-2", !selectedOption && "text-zinc-400")}>
@@ -62,7 +62,7 @@ export function EnhancedSelect({ value, onChange, options, placeholder = "Select
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 mt-1 w-full rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="animate-fade-in absolute z-50 mt-1 w-full rounded-lg border border-zinc-200 bg-white py-1 shadow-lg">
           <div className="flex items-center gap-2 border-b px-3 py-2">
             <Search className="h-4 w-4 text-zinc-400" />
             <input
@@ -88,8 +88,7 @@ export function EnhancedSelect({ value, onChange, options, placeholder = "Select
                     setSearch("");
                   }}
                   className={cn(
-                    "flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-zinc-50",
-                    "dark:hover:bg-zinc-900",
+                    "flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-zinc-50",
                     option.value === value && "bg-[#ea5c1c]/10 text-[#ea5c1c]"
                   )}
                 >

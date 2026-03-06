@@ -21,4 +21,8 @@ export class HiringIntakeDto {
   @IsOptional()
   @IsString()
   submissionId?: string;
+
+  @IsOptional()
+  @IsString()
+  notes?: string;
 }

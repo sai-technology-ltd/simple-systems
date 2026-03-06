@@ -1,0 +1,289 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { ArrowRight, CheckCircle2, ExternalLink, Mail, RefreshCw } from "lucide-react";
+import { CopyField } from "@/components/ui/copy-field";
+import { Button } from "@/components/ui/button";
+import { StatusBanner } from "@/components/status-banner";
+import { apiGet, apiPostWithoutBody } from "@/lib/api";
+import type { RoleSummary, TestSubmissionResponse, WorkspaceSummary } from "@/lib/contracts";
+import { readStoredClientSlug } from "@/lib/workspace-storage";
+
+export const dynamic = "force-dynamic";
+
+export default function RolesPage() {
+  const [clientSlug, setClientSlug] = useState("");
+  const [workspace, setWorkspace] = useState<WorkspaceSummary | null>(null);
+  const [roles, setRoles] = useState<RoleSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [testing, setTesting] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const slug = readStoredClientSlug();
+    setClientSlug(slug);
+
+    if (!slug) {
+      setLoading(false);
+      return;
+    }
+
+    void loadWorkspace(slug);
+  }, []);
+
+  async function loadWorkspace(slug: string) {
+    setLoading(true);
+    setError("");
+
+    try {
+      const [workspaceData, rolesData] = await Promise.all([
+        apiGet<WorkspaceSummary>(
+          `/clients/${slug}`,
+          "We couldn't load your workspace."
+        ),
+        apiGet<RoleSummary[]>(
+          `/clients/${slug}/roles`,
+          "We couldn't load your roles."
+        ),
+      ]);
+
+      setWorkspace(workspaceData);
+      setRoles(rolesData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to load workspace.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleTestSubmission() {
+    if (!clientSlug) {
+      return;
+    }
+
+    setTesting(true);
+    setMessage("");
+    setError("");
+
+    try {
+      const response = await apiPostWithoutBody<TestSubmissionResponse>(
+        `/clients/${clientSlug}/test-submission`,
+        "We couldn't send a test application."
+      );
+      setMessage(response.message || "Test application sent.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to send a test application.");
+    } finally {
+      setTesting(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <main className="mx-auto max-w-5xl px-6 py-16">
+        <p className="text-sm text-zinc-500">Loading workspace...</p>
+      </main>
+    );
+  }
+
+  if (!clientSlug) {
+    return (
+      <main className="mx-auto max-w-3xl px-6 py-16">
+        <div className="rounded-2xl border border-zinc-100 bg-white p-8">
+          <h1 className="text-2xl font-semibold text-zinc-900">Finish setup first</h1>
+          <p className="mt-2 text-sm text-zinc-500">
+            This workspace home needs a connected client. Start onboarding to create one.
+          </p>
+          <Link
+            href="/onboarding"
+            className="mt-6 inline-flex h-10 items-center gap-2 rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800"
+          >
+            Start onboarding
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="mx-auto max-w-6xl px-6 py-12">
+      <div className="animate-fade-up flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="text-sm font-medium text-orange-600">Workspace home</p>
+          <h1 className="text-3xl font-bold text-zinc-900">
+            {workspace?.settings.companyName || "Simple Hiring"}
+          </h1>
+          <p className="mt-2 text-zinc-500">
+            Keep setup visible, copy live role links, and run a test application when needed.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => void loadWorkspace(clientSlug)}
+            className="inline-flex h-10 items-center gap-2 rounded-lg border border-zinc-200 px-4 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </button>
+          <Link
+            href="/onboarding"
+            className="inline-flex h-10 items-center gap-2 rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800"
+          >
+            Open setup
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </div>
+
+      <div className="mt-8 grid gap-4 md:grid-cols-4">
+        <div className="animate-fade-up hover-lift rounded-2xl border border-zinc-100 bg-white p-5">
+          <p className="text-sm text-zinc-500">Setup</p>
+          <p className="mt-2 text-lg font-semibold text-zinc-900">
+            {workspace?.validationPassed ? "Complete" : "Needs attention"}
+          </p>
+        </div>
+        <div className="animate-fade-up delay-1 hover-lift rounded-2xl border border-zinc-100 bg-white p-5">
+          <p className="text-sm text-zinc-500">Activation</p>
+          <p className="mt-2 text-lg font-semibold text-zinc-900">
+            {workspace?.paymentPaid ? "Active" : "Inactive"}
+          </p>
+        </div>
+        <div className="animate-fade-up delay-2 hover-lift rounded-2xl border border-zinc-100 bg-white p-5">
+          <p className="text-sm text-zinc-500">Email</p>
+          <p className="mt-2 text-lg font-semibold text-zinc-900">
+            {workspace?.settings.emailEnabled ? "Enabled" : "Paused"}
+          </p>
+        </div>
+        <div className="animate-fade-up delay-3 hover-lift rounded-2xl border border-zinc-100 bg-white p-5">
+          <p className="text-sm text-zinc-500">Emails this month</p>
+          <p className="mt-2 text-lg font-semibold text-zinc-900">
+            {workspace?.emailsSentThisMonth ?? 0}
+            {workspace?.monthlyEmailQuota ? ` / ${workspace.monthlyEmailQuota}` : ""}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-6 space-y-4">
+        {workspace?.paymentPaid ? (
+          <StatusBanner
+            tone={workspace.emailQuotaExceeded ? "warning" : "success"}
+            title={
+              workspace.emailQuotaExceeded
+                ? "Email sending is paused"
+                : "Workspace is live"
+            }
+            description={
+              workspace.emailQuotaExceeded
+                ? "Your monthly email quota has been reached, so confirmation emails are paused."
+                : "Role links are active and applications can flow into Notion."
+            }
+          />
+        ) : (
+          <StatusBanner
+            tone="warning"
+            title="Workspace is not active yet"
+            description="You can finish setup now, but role links stay inactive until payment is complete."
+          />
+        )}
+
+        {message ? <StatusBanner tone="success" title={message} /> : null}
+        {error ? <StatusBanner tone="error" title={error} /> : null}
+      </div>
+
+      <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <section className="animate-fade-up hover-lift rounded-2xl border border-zinc-100 bg-white p-6">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold text-zinc-900">Role links</h2>
+              <p className="mt-1 text-sm text-zinc-500">
+                Roles are managed in Notion. Copy links here when they are ready to share.
+              </p>
+            </div>
+            <Button onClick={handleTestSubmission} disabled={testing || !workspace?.paymentPaid}>
+              {testing ? "Sending..." : "Send test application"}
+            </Button>
+          </div>
+
+          <div className="mt-6 space-y-4">
+            {roles.length ? (
+              roles.map((role) => (
+                <div key={role.id} className="animate-fade-in rounded-xl border border-zinc-100 p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                      <h3 className="font-medium text-zinc-900">{role.name}</h3>
+                      {role.description ? (
+                        <p className="mt-1 text-sm text-zinc-500">{role.description}</p>
+                      ) : null}
+                    </div>
+                    <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-600">
+                      {role.status || (workspace?.paymentPaid ? "Active link" : "Inactive")}
+                    </span>
+                  </div>
+                  <CopyField
+                    className="mt-4"
+                    label="Application link"
+                    value={
+                      role.applicationUrl ||
+                      `${typeof window !== "undefined" ? window.location.origin : "https://simplehiring.app"}/apply/${clientSlug}/${role.slug}`
+                    }
+                  />
+                </div>
+              ))
+            ) : (
+              <div className="rounded-xl bg-zinc-50 p-5 text-sm text-zinc-500">
+                No roles found yet. Add roles in your Notion Roles database, then refresh this page.
+              </div>
+            )}
+          </div>
+        </section>
+
+        <aside className="space-y-4">
+          <div className="animate-soft-scale rounded-2xl border border-zinc-100 bg-white p-6">
+            <h2 className="text-lg font-semibold text-zinc-900">Quick links</h2>
+            <div className="mt-4 space-y-3">
+              {workspace?.webhookUrl ? (
+                <CopyField label="Webhook URL" value={workspace.webhookUrl} />
+              ) : null}
+              {workspace?.setupGuideUrl ? (
+                <a
+                  href={workspace.setupGuideUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-orange-600"
+                >
+                  Open setup guide
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="animate-soft-scale delay-1 rounded-2xl border border-zinc-100 bg-white p-6">
+            <h2 className="text-lg font-semibold text-zinc-900">Email details</h2>
+            <div className="mt-4 space-y-3 text-sm text-zinc-600">
+              <div className="flex items-start gap-3">
+                <Mail className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
+                <div>
+                  <p className="font-medium text-zinc-900">
+                    {workspace?.settings.companyName || "Your company"} via Simple Hiring
+                  </p>
+                  <p className="text-zinc-500">
+                    Reply-to: {workspace?.settings.replyToEmail || "Not set"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                <p>Sent from notifications@simplehiring.app</p>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
+  );
+}
