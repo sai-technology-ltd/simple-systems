@@ -1,36 +1,107 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Simple Hiring App
 
-## Getting Started
+Frontend application for the Simple Hiring product. This app handles onboarding, workspace setup, role listing, and public application pages.
 
-First, run the development server:
+## Stack
+- Next.js App Router
+- React 19
+- TypeScript
+- Tailwind CSS v4
 
+## Local development
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The app runs on `http://localhost:3000` by default.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment
+- `NEXT_PUBLIC_API_BASE_URL`
+  - Base URL for the API
+  - Defaults to `https://api.simplesystem.app` when unset
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+For local development you will usually want:
 
-## Learn More
+```bash
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3001
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Main routes
+- `/`
+  - Marketing and product landing page
+- `/onboarding`
+  - Client setup flow
+- `/roles`
+  - Workspace home for live roles and test actions
+- `/settings`
+  - Client settings editor
+- `/apply/[clientSlug]/[roleSlug]`
+  - Public application page for a role
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Onboarding flow
+The onboarding page is stateful and driven by API responses from the client workspace endpoints.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Save company details
+   - Creates a client with `POST /onboarding/start` when needed
+   - Updates settings with `PATCH /clients/:clientSlug/settings`
+2. Connect Notion
+   - Starts OAuth with `POST /clients/:clientSlug/notion/connect`
+3. Load visible Notion databases
+   - Uses `GET /clients/:clientSlug/notion/databases`
+4. Save selected databases
+   - Uses `POST /clients/:clientSlug/notion/databases/select`
+5. Validate setup
+   - Uses `POST /clients/:clientSlug/validate`
+6. Activate workspace
+   - Starts payment and verifies activation state
 
-## Deploy on Vercel
+Important:
+- Seeing a database in the dropdown does not mean it has been saved to the workspace
+- Validation runs against the saved database IDs in the API, not only what is selected locally in the browser
+- The onboarding page now persists the current selection before validation if the selection has changed locally
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Client slug persistence
+The app stores the current `clientSlug` in local storage so the user can return to onboarding after OAuth or payment redirects.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Implementation:
+- [workspace-storage.ts](/Users/shareef/engineering/sai-technology/simple-systems/hiring/src/lib/workspace-storage.ts)
+- [page.tsx](/Users/shareef/engineering/sai-technology/simple-systems/hiring/src/app/onboarding/page.tsx)
+
+## API helpers
+Shared fetch helpers live in:
+- [api.ts](/Users/shareef/engineering/sai-technology/simple-systems/hiring/src/lib/api.ts)
+
+Behavior:
+- Sends JSON requests to `NEXT_PUBLIC_API_BASE_URL`
+- Parses API error payloads and surfaces `message` when present
+- Exposes `apiGet`, `apiPost`, `apiPatch`, and `apiPostWithoutBody`
+
+## UI notes
+The app uses a calm visual system:
+- Primary UI and text use slate tones
+- Backgrounds and cards use soft gray surfaces
+- Accent color is a restrained blue used sparingly for highlights
+- Typography uses readable sans-serif fonts via `next/font`
+
+Primary shared UI files:
+- [globals.css](/Users/shareef/engineering/sai-technology/simple-systems/hiring/src/app/globals.css)
+- [layout.tsx](/Users/shareef/engineering/sai-technology/simple-systems/hiring/src/app/layout.tsx)
+- [button.tsx](/Users/shareef/engineering/sai-technology/simple-systems/hiring/src/components/ui/button.tsx)
+- [enhanced-select.tsx](/Users/shareef/engineering/sai-technology/simple-systems/hiring/src/components/ui/enhanced-select.tsx)
+- [status-banner.tsx](/Users/shareef/engineering/sai-technology/simple-systems/hiring/src/components/status-banner.tsx)
+
+## Useful commands
+```bash
+pnpm dev
+pnpm build
+pnpm start
+pnpm lint
+```
+
+## Current verification
+There is no frontend test script configured right now. The main automated verification step available in this app is:
+
+```bash
+pnpm lint
+```
