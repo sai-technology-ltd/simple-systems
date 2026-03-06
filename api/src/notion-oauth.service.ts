@@ -109,9 +109,17 @@ export class NotionOauthService {
       success: true,
     });
 
+    const client = await this.clients.getById(payload.clientId);
+    if (!client) {
+      throw new BadRequestException('Client not found after Notion connection');
+    }
+
+    const appUrl = this.config.get<string>('HIRING_APP_URL') || 'https://simplehiring.app';
+    const redirect = new URL('/onboarding', appUrl);
+    redirect.searchParams.set('clientSlug', client.clientSlug);
+
     return {
-      ok: true,
-      redirectTo: 'https://simplehiring.app/onboarding',
+      url: redirect.toString(),
     };
   }
 

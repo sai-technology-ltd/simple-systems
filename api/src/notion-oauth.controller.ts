@@ -16,6 +16,7 @@ export class NotionOauthController {
   }
 
   @Get('callback')
+  @Redirect()
   async callback(@Query('code') code: string, @Query('state') state: string) {
     return this.oauth.handleCallback(code, state);
   }

@@ -197,11 +197,15 @@ export class ClientWorkspaceController {
       };
     }
 
+    const candidatesDbId = client.notionDbCandidatesId as string;
+    const rolesDbId = client.notionDbRolesId as string;
+    const stagesDbId = client.notionDbStagesId as string;
+
     try {
       const [candidates, roles, stages] = await Promise.all([
-        this.notion.getDatabase(clientSlug, client.notionDbCandidatesId),
-        this.notion.getDatabase(clientSlug, client.notionDbRolesId),
-        this.notion.getDatabase(clientSlug, client.notionDbStagesId),
+        this.notion.getDatabase(clientSlug, candidatesDbId),
+        this.notion.getDatabase(clientSlug, rolesDbId),
+        this.notion.getDatabase(clientSlug, stagesDbId),
       ]);
 
       const result = this.validator.validate({ candidates, roles, stages });

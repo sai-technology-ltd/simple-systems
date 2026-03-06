@@ -42,6 +42,7 @@ This repo ships with `docker-compose.yml` using `supabase/postgres`:
 - `POSTMARK_SERVER_TOKEN`
 - `ADMIN_API_KEY`
 - `OAUTH_STATE_SECRET`
+- `HIRING_APP_URL`
 
 ## Core onboarding flow
 The API models onboarding as distinct steps. These are easy to confuse in the UI unless they are handled separately:
@@ -52,6 +53,7 @@ The API models onboarding as distinct steps. These are easy to confuse in the UI
 2. Connect Notion
    - `POST /clients/:clientSlug/notion/connect`
    - Notion OAuth callback stores the encrypted access token on the client record
+   - The callback then redirects the browser to `${HIRING_APP_URL}/onboarding?clientSlug=...`
 3. List databases visible to the Notion integration
    - `GET /clients/:clientSlug/notion/databases`
    - This only confirms that the integration can see databases in Notion

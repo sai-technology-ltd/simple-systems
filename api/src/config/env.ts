@@ -15,6 +15,7 @@ const envSchema = z.object({
   OAUTH_STATE_SECRET: z.string().optional(),
   PAYSTACK_SECRET_KEY: z.string().optional(),
   PAYSTACK_DEFAULT_AMOUNT_KOBO: z.coerce.number().optional(),
+  HIRING_APP_URL: z.string().url().default('https://simplehiring.app'),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;

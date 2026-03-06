@@ -106,6 +106,10 @@ export class ClientService {
     return this.prisma.client.findUnique({ where: { clientSlug } });
   }
 
+  async getById(clientId: string) {
+    return this.prisma.client.findUnique({ where: { id: clientId } });
+  }
+
   async updateSettings(
     clientSlug: string,
     dto: {
