@@ -32,6 +32,12 @@ type ValidationIssue = {
   message: string;
 };
 
+type WorkspaceValidationResult = {
+  ok: boolean;
+  message: string;
+  issues: ValidationIssue[];
+};
+
 @Controller('clients/:clientSlug')
 export class ClientWorkspaceController {
   constructor(
@@ -179,16 +185,15 @@ export class ClientWorkspaceController {
       };
     }
 
-    if (!client.notionDbCandidatesId || !client.notionDbRolesId || !client.notionDbStagesId) {
+    const missingSelections = this.missingDatabaseSelections(client);
+    if (missingSelections.length > 0) {
       return {
         ok: false,
         message: 'Select your Candidates, Roles, and Stages databases.',
-        issues: [
-          {
-            database: 'workspace',
-            message: 'One or more required databases have not been selected.',
-          } satisfies ValidationIssue,
-        ],
+        issues: missingSelections.map((database) => ({
+          database: 'workspace',
+          message: `${database} database has not been selected.`,
+        })) satisfies ValidationIssue[],
       };
     }
 
@@ -213,21 +218,60 @@ export class ClientWorkspaceController {
         issues,
       };
     } catch (error) {
-      if (silent) {
-        return {
-          ok: false,
-          message: 'We could not validate your Notion setup right now.',
-          issues: [
-            {
-              database: 'workspace',
-              message: 'Validation could not complete. Try again after reconnecting Notion.',
-            } satisfies ValidationIssue,
-          ],
-        };
-      }
-
-      throw new BadRequestException('Unable to validate the selected databases');
+      return this.handleValidationFailure(error, silent);
     }
+  }
+
+  private missingDatabaseSelections(client: {
+    notionDbCandidatesId?: string | null;
+    notionDbRolesId?: string | null;
+    notionDbStagesId?: string | null;
+  }) {
+    const missing: string[] = [];
+    if (!client.notionDbCandidatesId) missing.push('Candidates');
+    if (!client.notionDbRolesId) missing.push('Roles');
+    if (!client.notionDbStagesId) missing.push('Stages');
+    return missing;
+  }
+
+  private handleValidationFailure(error: unknown, silent: boolean): WorkspaceValidationResult {
+    const detail = this.describeValidationError(error);
+    return {
+      ok: false,
+      message: silent
+        ? 'We could not validate your Notion setup right now.'
+        : 'Unable to validate the selected databases.',
+      issues: [
+        {
+          database: 'workspace',
+          message: detail,
+        },
+      ],
+    };
+  }
+
+  private describeValidationError(error: unknown) {
+    const status = this.readErrorField<number>(error, 'status');
+    const message = this.readErrorField<string>(error, 'message');
+
+    if (status === 404) {
+      return 'One of the selected databases could not be found in Notion. Re-select the database and try again.';
+    }
+
+    if (status === 401 || status === 403) {
+      return 'Notion denied access to one of the selected databases. Reconnect the integration and confirm every database is shared with it.';
+    }
+
+    if (message) {
+      return `Validation could not complete: ${message}`;
+    }
+
+    return 'Validation could not complete. Try again after reconnecting Notion.';
+  }
+
+  private readErrorField<T>(error: unknown, key: string): T | undefined {
+    if (!error || typeof error !== 'object' || !(key in error)) return undefined;
+    return (error as Record<string, T>)[key];
   }
 
   private async requireClientWithRoles(clientSlug: string) {

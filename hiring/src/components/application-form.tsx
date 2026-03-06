@@ -122,7 +122,7 @@ export function ApplicationForm({
             onChange={(event) =>
               setFormData((current) => ({ ...current, notes: event.target.value }))
             }
-            className="min-h-32 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#ea5c1c]/40"
+            className="min-h-32 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-slate-500/20"
             placeholder="Share a short note with your application."
           />
         </div>

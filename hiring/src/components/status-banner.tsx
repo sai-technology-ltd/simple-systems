@@ -9,9 +9,9 @@ interface StatusBannerProps {
 }
 
 const toneStyles = {
-  info: "border-zinc-200 bg-zinc-50 text-zinc-700",
-  success: "border-emerald-200 bg-emerald-50 text-emerald-900",
-  warning: "border-amber-200 bg-amber-50 text-amber-900",
+  info: "border-slate-200 bg-slate-50 text-slate-700",
+  success: "border-slate-200 bg-[rgb(var(--success-soft))] text-slate-800",
+  warning: "border-slate-200 bg-[rgb(var(--warning-soft))] text-slate-800",
   error: "border-red-200 bg-red-50 text-red-900",
 } as const;
 

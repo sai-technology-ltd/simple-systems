@@ -290,7 +290,7 @@ describe('ClientWorkspaceController', () => {
       issues: [
         {
           database: 'workspace',
-          message: 'One or more required databases have not been selected.',
+          message: 'Roles database has not been selected.',
         },
       ],
     });
@@ -346,7 +346,7 @@ describe('ClientWorkspaceController', () => {
     );
   });
 
-  it('throws when explicit validation cannot complete', async () => {
+  it('returns a descriptive error when explicit validation cannot complete', async () => {
     clients.getBySlug.mockResolvedValue({
       clientSlug: 'swift-transport',
       notionAccessTokenEnc: 'encrypted',
@@ -364,9 +364,47 @@ describe('ClientWorkspaceController', () => {
     } as never);
     notion.getDatabase.mockRejectedValue(new Error('Notion unavailable'));
 
-    await expect(controller.validate('swift-transport')).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+    await expect(controller.validate('swift-transport')).resolves.toEqual({
+      ok: false,
+      message: 'Unable to validate the selected databases.',
+      issues: [
+        {
+          database: 'workspace',
+          message: 'Validation could not complete: Notion unavailable',
+        },
+      ],
+    });
+  });
+
+  it('returns a permission-specific error when Notion denies access during validation', async () => {
+    clients.getBySlug.mockResolvedValue({
+      clientSlug: 'swift-transport',
+      notionAccessTokenEnc: 'encrypted',
+      notionDbCandidatesId: 'candidates-db',
+      notionDbRolesId: 'roles-db',
+      notionDbStagesId: 'stages-db',
+      paymentStatus: PaymentStatus.PENDING,
+      companyName: 'Swift Transport',
+      replyToEmail: 'hiring@swift.com',
+      logoUrl: null,
+      emailEnabled: true,
+      emailsSentMonth: 0,
+      monthlyEmailQuota: 500,
+      updatedAt: new Date('2026-03-06T00:00:00.000Z'),
+    } as never);
+    notion.getDatabase.mockRejectedValue({ status: 403, message: 'Forbidden' });
+
+    await expect(controller.validate('swift-transport')).resolves.toEqual({
+      ok: false,
+      message: 'Unable to validate the selected databases.',
+      issues: [
+        {
+          database: 'workspace',
+          message:
+            'Notion denied access to one of the selected databases. Reconnect the integration and confirm every database is shared with it.',
+        },
+      ],
+    });
   });
 
   it('starts Notion OAuth via the backend route the frontend calls', async () => {

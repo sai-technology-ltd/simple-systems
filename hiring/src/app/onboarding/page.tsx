@@ -79,6 +79,65 @@ function getActiveStep(workspace: WorkspaceSummary | null, clientSlug: string) {
   return 5;
 }
 
+function hasCompleteSelection(selection: DatabaseSelection) {
+  return Boolean(
+    selection.candidatesDatabaseId &&
+      selection.rolesDatabaseId &&
+      selection.stagesDatabaseId
+  );
+}
+
+function selectionMatchesWorkspace(
+  selection: DatabaseSelection,
+  workspace: WorkspaceSummary | null
+) {
+  if (!workspace?.selectedDatabases) {
+    return false;
+  }
+
+  return (
+    selection.candidatesDatabaseId ===
+      (workspace.selectedDatabases.candidatesDatabaseId || "") &&
+    selection.rolesDatabaseId ===
+      (workspace.selectedDatabases.rolesDatabaseId || "") &&
+    selection.stagesDatabaseId ===
+      (workspace.selectedDatabases.stagesDatabaseId || "")
+  );
+}
+
+function databaseSelectionStatus(
+  selection: DatabaseSelection,
+  workspace: WorkspaceSummary | null
+) {
+  const complete = hasCompleteSelection(selection);
+  const saved = complete && selectionMatchesWorkspace(selection, workspace);
+
+  if (!complete) {
+    return {
+      tone: "info" as const,
+      title: "Selection incomplete",
+      description:
+        "Choose a Candidates, Roles, and Stages database before saving or validating.",
+    };
+  }
+
+  if (saved && workspace?.databasesSaved) {
+    return {
+      tone: "success" as const,
+      title: "Selection saved",
+      description:
+        "These database IDs are already stored in your workspace. You can validate any time.",
+    };
+  }
+
+  return {
+    tone: "warning" as const,
+    title: "Selection pending save",
+    description:
+      "You changed the local selection. Save it or click Validate to persist it before schema checks run.",
+  };
+}
+
 export default function OnboardingPage() {
   const [clientSlug, setClientSlug] = useState("");
   const [workspace, setWorkspace] = useState<WorkspaceSummary | null>(null);
@@ -299,6 +358,23 @@ export default function OnboardingPage() {
     setFormMessage("");
 
     try {
+      if (!hasCompleteSelection(selection)) {
+        throw new Error("Choose your Candidates, Roles, and Stages databases first.");
+      }
+
+      if (!selectionMatchesWorkspace(selection, workspace)) {
+        await apiPost(
+          `/clients/${clientSlug}/notion/databases/select`,
+          {
+            candidatesDbId: selection.candidatesDatabaseId,
+            rolesDbId: selection.rolesDatabaseId,
+            stagesDbId: selection.stagesDatabaseId,
+          },
+          "We couldn't save your database selection."
+        );
+        await loadWorkspace(clientSlug, true);
+      }
+
       const result = await apiPostWithoutBody<ValidationResult>(
         `/clients/${clientSlug}/validate`,
         "We couldn't validate your setup right now."
@@ -425,18 +501,20 @@ export default function OnboardingPage() {
         : clientSlug
           ? "In progress"
           : "Not started";
+  const selectionState = databaseSelectionStatus(selection, workspace);
+  const selectionComplete = hasCompleteSelection(selection);
 
   return (
-    <div className="min-h-screen bg-[#fafafa]">
-      <header className="border-b border-zinc-100 bg-white">
+    <div className="min-h-screen bg-transparent">
+      <header className="border-b border-slate-200/80 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
           <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-orange-600">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-slate-700 to-slate-800">
               <span className="text-xs font-bold text-white">SH</span>
             </div>
-            <span className="text-sm font-medium text-zinc-900">{PRODUCT_NAME}</span>
+            <span className="brand-heading text-sm font-semibold text-slate-800">{PRODUCT_NAME}</span>
           </Link>
-          <Link href="/" className="text-sm text-zinc-500 hover:text-zinc-900">
+          <Link href="/" className="text-sm text-slate-500 hover:text-slate-800">
             Exit
           </Link>
         </div>
@@ -446,9 +524,9 @@ export default function OnboardingPage() {
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="space-y-6">
             <div className="animate-fade-up space-y-3">
-              <p className="text-sm font-medium text-orange-600">Guided setup</p>
-              <h1 className="text-3xl font-bold text-zinc-900">Set up your hiring workspace</h1>
-              <p className="max-w-2xl text-zinc-500">
+              <p className="text-sm font-medium uppercase tracking-[0.14em] text-slate-500">Guided setup</p>
+              <h1 className="brand-heading text-3xl font-bold text-slate-800">Set up your hiring workspace</h1>
+              <p className="max-w-2xl text-slate-500">
                 This flow keeps everything simple: save your company details, connect Notion,
                 validate the three required databases, then activate your workspace when you are ready.
               </p>
@@ -457,23 +535,23 @@ export default function OnboardingPage() {
             <SetupStepper steps={ONBOARDING_STEPS} currentStep={activeStep} />
 
             {loadingWorkspace ? (
-              <div className="rounded-2xl border border-zinc-100 bg-white p-8">
-                <div className="flex items-center gap-3 text-sm text-zinc-500">
+              <div className="rounded-2xl border border-slate-200 bg-white/90 p-8 shadow-sm shadow-slate-900/5">
+                <div className="flex items-center gap-3 text-sm text-slate-500">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Loading your workspace...
                 </div>
               </div>
             ) : (
               <>
-                <section className="animate-fade-up hover-lift rounded-2xl border border-zinc-100 bg-white">
-                  <div className="border-b border-zinc-100 p-8">
+                <section className="animate-fade-up hover-lift rounded-2xl border border-slate-200 bg-white/95 shadow-sm shadow-slate-900/5">
+                  <div className="border-b border-slate-200 p-8">
                     <div className="flex items-center gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-50">
-                        <Settings className="h-6 w-6 text-orange-500" />
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100">
+                        <Settings className="h-6 w-6 text-slate-700" />
                       </div>
                       <div>
-                        <h2 className="text-xl font-semibold text-zinc-900">Step 1: Company details</h2>
-                        <p className="mt-1 text-sm text-zinc-500">
+                        <h2 className="brand-heading text-xl font-semibold text-slate-800">Step 1: Company details</h2>
+                        <p className="mt-1 text-sm text-slate-500">
                           Add the details used in your confirmation emails and workspace setup.
                         </p>
                       </div>
@@ -509,21 +587,21 @@ export default function OnboardingPage() {
                         placeholder="https://"
                       />
                     </div>
-                    <div className="md:col-span-2 rounded-xl bg-zinc-50 p-4">
+                    <div className="md:col-span-2 rounded-xl bg-slate-50 p-4">
                       <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-2 text-sm text-zinc-700">
-                          <Mail className="h-4 w-4 text-zinc-400" />
+                        <div className="flex items-center gap-2 text-sm text-slate-700">
+                          <Mail className="h-4 w-4 text-slate-400" />
                           Confirmation emails
                         </div>
                         <Toggle checked={emailEnabled} onChange={setEmailEnabled} />
                       </div>
-                      <p className="mt-2 text-sm text-zinc-500">
+                      <p className="mt-2 text-sm text-slate-500">
                         Emails send from <span className="font-medium">notifications@simplehiring.app</span>{" "}
                         with your reply-to address.
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center justify-end border-t border-zinc-100 p-6">
+                  <div className="flex items-center justify-end border-t border-slate-200 p-6">
                     <Button
                       onClick={handleSaveCompany}
                       disabled={saving || !companyName || !replyToEmail}
@@ -533,15 +611,15 @@ export default function OnboardingPage() {
                   </div>
                 </section>
 
-                <section className="animate-fade-up delay-1 hover-lift rounded-2xl border border-zinc-100 bg-white">
-                  <div className="border-b border-zinc-100 p-8">
+                <section className="animate-fade-up delay-1 hover-lift rounded-2xl border border-slate-200 bg-white/95 shadow-sm shadow-slate-900/5">
+                  <div className="border-b border-slate-200 p-8">
                     <div className="flex items-center gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-50">
-                        <Link2 className="h-6 w-6 text-orange-500" />
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100">
+                        <Link2 className="h-6 w-6 text-slate-700" />
                       </div>
                       <div>
-                        <h2 className="text-xl font-semibold text-zinc-900">Step 2: Connect Notion</h2>
-                        <p className="mt-1 text-sm text-zinc-500">
+                        <h2 className="brand-heading text-xl font-semibold text-slate-800">Step 2: Connect Notion</h2>
+                        <p className="mt-1 text-sm text-slate-500">
                           Connect the Notion workspace where you want candidates, roles, and stages to live.
                         </p>
                       </div>
@@ -568,7 +646,7 @@ export default function OnboardingPage() {
                         <button
                           type="button"
                           onClick={() => void loadWorkspace(clientSlug, true)}
-                          className="h-10 rounded-lg border border-zinc-200 px-4 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+                          className="h-10 rounded-lg border border-slate-200 px-4 text-sm font-medium text-slate-700 hover:bg-slate-50"
                         >
                           Refresh status
                         </button>
@@ -577,15 +655,15 @@ export default function OnboardingPage() {
                   </div>
                 </section>
 
-                <section className="animate-fade-up delay-2 hover-lift rounded-2xl border border-zinc-100 bg-white">
-                  <div className="border-b border-zinc-100 p-8">
+                <section className="animate-fade-up delay-2 hover-lift rounded-2xl border border-slate-200 bg-white/95 shadow-sm shadow-slate-900/5">
+                  <div className="border-b border-slate-200 p-8">
                     <div className="flex items-center gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-50">
-                        <Database className="h-6 w-6 text-orange-500" />
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100">
+                        <Database className="h-6 w-6 text-slate-700" />
                       </div>
                       <div>
-                        <h2 className="text-xl font-semibold text-zinc-900">Step 3: Select databases</h2>
-                        <p className="mt-1 text-sm text-zinc-500">
+                        <h2 className="brand-heading text-xl font-semibold text-slate-800">Step 3: Select databases</h2>
+                        <p className="mt-1 text-sm text-slate-500">
                           Choose the three Notion databases that power your hiring workflow.
                         </p>
                       </div>
@@ -642,12 +720,18 @@ export default function OnboardingPage() {
 
                     <div className="grid gap-3 md:grid-cols-3">
                       {REQUIRED_DATABASES.map((database) => (
-                        <div key={database.key} className="rounded-xl bg-zinc-50 p-4">
-                          <p className="text-sm font-medium text-zinc-800">{database.title}</p>
-                          <p className="mt-1 text-sm text-zinc-500">{database.help}</p>
+                        <div key={database.key} className="rounded-xl bg-slate-50 p-4">
+                          <p className="text-sm font-medium text-slate-800">{database.title}</p>
+                          <p className="mt-1 text-sm text-slate-500">{database.help}</p>
                         </div>
                       ))}
                     </div>
+
+                    <StatusBanner
+                      tone={selectionState.tone}
+                      title={selectionState.title}
+                      description={selectionState.description}
+                    />
 
                     {validation ? (
                       validation.ok ? (
@@ -670,8 +754,8 @@ export default function OnboardingPage() {
                             }
                           />
                           {validation.issues.length ? (
-                            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-                              <ul className="space-y-2 text-sm text-amber-900">
+                            <div className="rounded-xl border border-slate-200 bg-[rgb(var(--warning-soft))] p-4">
+                              <ul className="space-y-2 text-sm text-slate-800">
                                 {validation.issues.map((issue) => (
                                   <li key={`${issue.database}-${issue.message}`}>{issue.message}</li>
                                 ))}
@@ -682,18 +766,16 @@ export default function OnboardingPage() {
                       )
                     ) : null}
                   </div>
-                  <div className="flex flex-wrap items-center justify-end gap-3 border-t border-zinc-100 p-6">
+                  <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 p-6">
                     <button
                       type="button"
                       onClick={handleSaveDatabases}
                       disabled={
                         saving ||
                         !workspace?.notionConnected ||
-                        !selection.candidatesDatabaseId ||
-                        !selection.rolesDatabaseId ||
-                        !selection.stagesDatabaseId
+                        !selectionComplete
                       }
-                      className="h-10 rounded-lg border border-zinc-200 px-4 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="h-10 rounded-lg border border-slate-200 px-4 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Save selection
                     </button>
@@ -702,9 +784,7 @@ export default function OnboardingPage() {
                       disabled={
                         validating ||
                         !workspace?.notionConnected ||
-                        !selection.candidatesDatabaseId ||
-                        !selection.rolesDatabaseId ||
-                        !selection.stagesDatabaseId
+                        !selectionComplete
                       }
                     >
                       {validating ? "Validating..." : "Validate setup"}
@@ -712,28 +792,28 @@ export default function OnboardingPage() {
                   </div>
                 </section>
 
-                <section className="animate-fade-up delay-3 hover-lift rounded-2xl border border-zinc-100 bg-white">
-                  <div className="border-b border-zinc-100 p-8">
+                <section className="animate-fade-up delay-3 hover-lift rounded-2xl border border-slate-200 bg-white/95 shadow-sm shadow-slate-900/5">
+                  <div className="border-b border-slate-200 p-8">
                     <div className="flex items-center gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-50">
-                        <CreditCard className="h-6 w-6 text-orange-500" />
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100">
+                        <CreditCard className="h-6 w-6 text-slate-700" />
                       </div>
                       <div>
-                        <h2 className="text-xl font-semibold text-zinc-900">Step 4: Activate workspace</h2>
-                        <p className="mt-1 text-sm text-zinc-500">
+                        <h2 className="brand-heading text-xl font-semibold text-slate-800">Step 4: Activate workspace</h2>
+                        <p className="mt-1 text-sm text-slate-500">
                           Activation unlocks live application links, webhook processing, and confirmation emails.
                         </p>
                       </div>
                     </div>
                   </div>
                   <div className="space-y-4 p-8">
-                    <div className="rounded-2xl bg-zinc-900 p-6 text-white">
-                      <p className="text-sm text-zinc-300">One-time activation</p>
+                    <div className="rounded-2xl bg-slate-800 p-6 text-white">
+                      <p className="text-sm text-slate-300">One-time activation</p>
                       <div className="mt-2 flex items-end gap-2">
                         <span className="text-4xl font-bold">{formatCurrency(ONE_TIME_PRICE_USD)}</span>
-                        <span className="pb-1 text-sm text-zinc-400">paid once</span>
+                        <span className="pb-1 text-sm text-slate-400">paid once</span>
                       </div>
-                      <p className="mt-4 max-w-xl text-sm text-zinc-300">
+                      <p className="mt-4 max-w-xl text-sm text-slate-300">
                         Complete setup first, then activate when you’re ready to accept live applications.
                       </p>
                     </div>
@@ -771,7 +851,7 @@ export default function OnboardingPage() {
                         type="button"
                         onClick={() => void verifyPayment()}
                         disabled={!paymentReference || saving || workspace?.paymentPaid}
-                        className="h-10 rounded-lg border border-zinc-200 px-4 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="h-10 rounded-lg border border-slate-200 px-4 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         Verify payment
                       </button>
@@ -779,15 +859,15 @@ export default function OnboardingPage() {
                   </div>
                 </section>
 
-                <section className="animate-fade-up hover-lift rounded-2xl border border-zinc-100 bg-white">
-                  <div className="border-b border-zinc-100 p-8">
+                <section className="animate-fade-up hover-lift rounded-2xl border border-slate-200 bg-white/95 shadow-sm shadow-slate-900/5">
+                  <div className="border-b border-slate-200 p-8">
                     <div className="flex items-center gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50">
-                        <Sparkles className="h-6 w-6 text-emerald-600" />
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[rgb(var(--accent-soft))]">
+                        <Sparkles className="h-6 w-6 text-slate-700" />
                       </div>
                       <div>
-                        <h2 className="text-xl font-semibold text-zinc-900">Step 5: Go live</h2>
-                        <p className="mt-1 text-sm text-zinc-500">
+                        <h2 className="brand-heading text-xl font-semibold text-slate-800">Step 5: Go live</h2>
+                        <p className="mt-1 text-sm text-slate-500">
                           Copy your role links, send a test application, and share your roles when ready.
                         </p>
                       </div>
@@ -806,18 +886,18 @@ export default function OnboardingPage() {
                             {roles.map((role) => (
                               <div
                                 key={role.id}
-                                className="rounded-xl border border-zinc-100 p-4"
+                                className="rounded-xl border border-slate-200 p-4"
                               >
                                 <div className="flex flex-wrap items-start justify-between gap-4">
                                   <div>
-                                    <h3 className="font-medium text-zinc-900">{role.name}</h3>
+                                    <h3 className="font-medium text-slate-800">{role.name}</h3>
                                     {role.description ? (
-                                      <p className="mt-1 max-w-xl text-sm text-zinc-500">
+                                      <p className="mt-1 max-w-xl text-sm text-slate-500">
                                         {role.description}
                                       </p>
                                     ) : null}
                                   </div>
-                                  <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-600">
+                                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
                                     {role.status || "Live link"}
                                   </span>
                                 </div>
@@ -850,7 +930,7 @@ export default function OnboardingPage() {
                           </Button>
                           <Link
                             href="/roles"
-                            className="inline-flex h-10 items-center gap-2 rounded-lg border border-zinc-200 px-4 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+                            className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 px-4 text-sm font-medium text-slate-700 hover:bg-slate-50"
                           >
                             Open workspace home
                             <ArrowRight className="h-4 w-4" />
@@ -860,7 +940,7 @@ export default function OnboardingPage() {
                               href={workspace.setupGuideUrl}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex h-10 items-center gap-2 rounded-lg border border-zinc-200 px-4 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+                              className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 px-4 text-sm font-medium text-slate-700 hover:bg-slate-50"
                             >
                               Setup guide
                               <ExternalLink className="h-4 w-4" />
@@ -887,53 +967,53 @@ export default function OnboardingPage() {
           </div>
 
           <aside className="space-y-4">
-            <div className="animate-soft-scale rounded-2xl border border-zinc-100 bg-white p-6">
-              <p className="text-sm font-medium text-zinc-500">Workspace status</p>
-              <h2 className="mt-2 text-2xl font-semibold text-zinc-900">{setupStatus}</h2>
-              <p className="mt-2 text-sm text-zinc-500">
+            <div className="animate-soft-scale rounded-2xl border border-slate-200 bg-white/95 p-6 shadow-sm shadow-slate-900/5">
+              <p className="text-sm font-medium text-slate-500">Workspace status</p>
+              <h2 className="brand-heading mt-2 text-2xl font-semibold text-slate-800">{setupStatus}</h2>
+              <p className="mt-2 text-sm text-slate-500">
                 {workspace?.paymentPaid
                   ? "Your application links are live."
                   : "Each step unlocks the next one so setup stays clear and predictable."}
               </p>
-              <div className="mt-5 space-y-3 text-sm text-zinc-600">
+              <div className="mt-5 space-y-3 text-sm text-slate-600">
                 <div className="flex items-center justify-between">
                   <span>Client slug</span>
-                  <span className="font-medium text-zinc-900">{clientSlug || "Not created yet"}</span>
+                  <span className="font-medium text-slate-800">{clientSlug || "Not created yet"}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Notion connected</span>
-                  <span className="font-medium text-zinc-900">
+                  <span className="font-medium text-slate-800">
                     {workspace?.notionConnected ? "Yes" : "No"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Setup validated</span>
-                  <span className="font-medium text-zinc-900">
+                  <span className="font-medium text-slate-800">
                     {workspace?.validationPassed ? "Yes" : "No"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Activated</span>
-                  <span className="font-medium text-zinc-900">
+                  <span className="font-medium text-slate-800">
                     {workspace?.paymentPaid ? "Yes" : "No"}
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="animate-soft-scale delay-1 rounded-2xl border border-zinc-100 bg-white p-6">
-              <p className="text-sm font-medium text-zinc-500">What happens after activation</p>
-              <ul className="mt-4 space-y-3 text-sm text-zinc-600">
+            <div className="animate-soft-scale delay-1 rounded-2xl border border-slate-200 bg-white/95 p-6 shadow-sm shadow-slate-900/5">
+              <p className="text-sm font-medium text-slate-500">What happens after activation</p>
+              <ul className="mt-4 space-y-3 text-sm text-slate-600">
                 <li className="flex gap-3">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-slate-700" />
                   Role links become live.
                 </li>
                 <li className="flex gap-3">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-slate-700" />
                   Application processing is enabled.
                 </li>
                 <li className="flex gap-3">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-slate-700" />
                   Confirmation emails can send if email is turned on.
                 </li>
               </ul>

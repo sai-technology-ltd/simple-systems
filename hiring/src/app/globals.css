@@ -1,10 +1,19 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap');
 @import "tailwindcss";
 
 :root {
-  --background: 255 255 255;
-  --foreground: 10 10 10;
-  --brand: 234 92 28; /* #ea5c1c */
+  --background: 242 245 247;
+  --surface: 255 255 255;
+  --surface-muted: 233 238 242;
+  --foreground: 42 54 66;
+  --foreground-muted: 91 103 116;
+  --border: 212 220 228;
+  --primary: 42 54 66;
+  --accent: 88 123 163;
+  --accent-soft: 225 234 244;
+  --success: 91 122 108;
+  --success-soft: 228 238 232;
+  --warning: 160 112 70;
+  --warning-soft: 245 238 228;
 }
 
 .dark {
@@ -20,7 +29,10 @@ body {
 body {
   background: rgb(var(--background));
   color: rgb(var(--foreground));
-  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  background-image:
+    radial-gradient(circle at top left, rgba(var(--accent), 0.08), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(242, 245, 247, 0.96));
 }
 
 @keyframes fade-up {
@@ -101,5 +113,10 @@ h1,
 h2,
 h3,
 .brand-heading {
-  font-family: 'Space Grotesk', Inter, ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-heading), var(--font-body), ui-sans-serif, system-ui, sans-serif;
+}
+
+::selection {
+  background: rgba(var(--accent), 0.22);
+  color: rgb(var(--foreground));
 }

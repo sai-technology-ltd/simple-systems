@@ -25,7 +25,7 @@ export function CopyField({ value, label, showReveal = false, className }: CopyF
 
   return (
     <div className={cn("space-y-1.5", className)}>
-      {label && <label className="text-sm font-medium text-zinc-700">{label}</label>}
+      {label && <label className="text-sm font-medium text-slate-700">{label}</label>}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <input
@@ -33,8 +33,8 @@ export function CopyField({ value, label, showReveal = false, className }: CopyF
             value={displayValue}
             readOnly
             className={cn(
-              "h-10 w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 pr-20 text-sm font-mono text-zinc-900 transition-[border-color,box-shadow] duration-200",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ea5c1c]/30",
+              "h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 pr-20 text-sm font-mono text-slate-800 transition-[border-color,box-shadow] duration-200",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500/20",
               showReveal && "tracking-widest"
             )}
           />
@@ -43,7 +43,7 @@ export function CopyField({ value, label, showReveal = false, className }: CopyF
               <button
                 type="button"
                 onClick={() => setRevealed(!revealed)}
-                className="flex h-8 w-8 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
+                className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
               >
                 {revealed ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -54,8 +54,8 @@ export function CopyField({ value, label, showReveal = false, className }: CopyF
               className={cn(
                 "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
                 copied
-                  ? "bg-emerald-100 text-emerald-600"
-                  : "text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+                  ? "bg-[rgb(var(--success-soft))] text-slate-700"
+                  : "text-slate-400 hover:bg-slate-100 hover:text-slate-600"
               )}
             >
               {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
