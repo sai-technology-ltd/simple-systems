@@ -1,4 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
+import { PaymentStatus } from '@prisma/client';
 import { ApplyController } from './apply.controller';
 import { ClientService } from '../client.service';
 import { NotionService } from '../notion/notion.service';
@@ -29,6 +30,7 @@ describe('ApplyController', () => {
   it('returns basic role metadata for GET resolve', async () => {
     clients.findActiveBySlug.mockResolvedValue({
       notionDbRolesId: 'roles-db',
+      paymentStatus: PaymentStatus.PAID,
     } as never);
     notion.findRoleBySlug.mockResolvedValue({
       results: [
@@ -54,6 +56,7 @@ describe('ApplyController', () => {
   it('submits an application through the intake service', async () => {
     clients.findActiveBySlug.mockResolvedValue({
       notionDbRolesId: 'roles-db',
+      paymentStatus: PaymentStatus.PAID,
     } as never);
     notion.findRoleBySlug.mockResolvedValue({
       results: [{ id: 'role-page-1', properties: {} }],
@@ -85,6 +88,7 @@ describe('ApplyController', () => {
   it('throws when the role does not exist', async () => {
     clients.findActiveBySlug.mockResolvedValue({
       notionDbRolesId: 'roles-db',
+      paymentStatus: PaymentStatus.PAID,
     } as never);
     notion.findRoleBySlug.mockResolvedValue({ results: [] } as never);
 
@@ -99,6 +103,7 @@ describe('ApplyController', () => {
   it('throws on GET resolve when the role does not exist', async () => {
     clients.findActiveBySlug.mockResolvedValue({
       notionDbRolesId: 'roles-db',
+      paymentStatus: PaymentStatus.PAID,
     } as never);
     notion.findRoleBySlug.mockResolvedValue({ results: [] } as never);
 
@@ -118,6 +123,7 @@ describe('ApplyController', () => {
   it('falls back to the Name property when Role Name is missing', async () => {
     clients.findActiveBySlug.mockResolvedValue({
       notionDbRolesId: 'roles-db',
+      paymentStatus: PaymentStatus.PAID,
     } as never);
     notion.findRoleBySlug.mockResolvedValue({
       results: [
@@ -149,5 +155,21 @@ describe('ApplyController', () => {
         email: 'jane@example.com',
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects submit when the workspace is not active', async () => {
+    clients.findActiveBySlug.mockResolvedValue({
+      notionDbRolesId: 'roles-db',
+      paymentStatus: PaymentStatus.PENDING,
+    } as never);
+
+    await expect(
+      controller.submit('swift-transport', 'platform-engineer', {
+        name: 'Jane Doe',
+        email: 'jane@example.com',
+      }),
+    ).rejects.toThrow(
+      'This workspace is not active yet. Complete payment to accept applications.',
+    );
   });
 });

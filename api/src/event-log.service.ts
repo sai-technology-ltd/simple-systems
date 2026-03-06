@@ -39,6 +39,19 @@ export class EventLogService {
     return rows.length > 0;
   }
 
+  async hasSuccessfulEvent(clientId: string, type: string) {
+    const rows = await this.prisma.eventLog.findMany({
+      where: {
+        clientId,
+        type,
+        success: true,
+      },
+      take: 1,
+      orderBy: { createdAt: 'desc' },
+    });
+    return rows.length > 0;
+  }
+
   async listClientLogs(clientId: string, take = 50) {
     return this.prisma.eventLog.findMany({
       where: { clientId },

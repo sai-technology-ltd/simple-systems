@@ -1,4 +1,5 @@
 import { BadRequestException, Controller, Get, Param, Post, Body } from '@nestjs/common';
+import { PaymentStatus } from '@prisma/client';
 import { ClientService } from '../client.service';
 import { HiringIntakeService } from '../webhooks/hiring-intake.service';
 import { NotionService } from '../notion/notion.service';
@@ -43,6 +44,9 @@ export class ApplyController {
   ) {
     const client = await this.clients.findActiveBySlug(clientSlug);
     if (!client || !client.notionDbRolesId) throw new BadRequestException('Client not configured');
+    if (client.paymentStatus !== PaymentStatus.PAID) {
+      throw new BadRequestException('This workspace is not active yet. Complete payment to accept applications.');
+    }
 
     const result = await this.notion.findRoleBySlug(clientSlug, client.notionDbRolesId, roleSlug);
     const role = result.results?.[0];

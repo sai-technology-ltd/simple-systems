@@ -12,6 +12,7 @@ import { HiringIntakeService } from '../webhooks/hiring-intake.service';
 import { NotionOauthService } from '../notion-oauth.service';
 import { NotionService } from '../notion/notion.service';
 import { SchemaValidatorService } from '../notion/schema-validator.service';
+import { EventLogService } from '../event-log.service';
 
 type NotionProperty = {
   type?: string;
@@ -47,6 +48,7 @@ export class ClientWorkspaceController {
     private readonly notion: NotionService,
     private readonly oauth: NotionOauthService,
     private readonly validator: SchemaValidatorService,
+    private readonly events: EventLogService,
   ) {}
 
   @Get()
@@ -55,6 +57,9 @@ export class ClientWorkspaceController {
     if (!client) throw new BadRequestException('Client not found');
 
     const validation = await this.validateWorkspace(clientSlug, true);
+    const previewTestUsed = await this.events.hasSuccessfulEvent(client.id, 'HIRING_PREVIEW_TEST');
+    const previewTestAvailable =
+      client.paymentStatus !== PaymentStatus.PAID && validation.ok && !previewTestUsed;
 
     return {
       clientSlug: client.clientSlug,
@@ -79,6 +84,8 @@ export class ClientWorkspaceController {
       },
       validationPassed: validation.ok,
       validationMessage: validation.message,
+      previewTestAvailable,
+      previewTestUsed,
       webhookUrl: `${this.config.getOrThrow<string>('BASE_URL')}/webhooks/hiring/intake/${client.clientSlug}`,
       setupGuideUrl: null,
       emailsSentThisMonth: client.emailsSentMonth,
@@ -138,6 +145,19 @@ export class ClientWorkspaceController {
     if (!client.replyToEmail) {
       throw new BadRequestException('Add a reply-to email before sending a test application');
     }
+    if (client.paymentStatus !== PaymentStatus.PAID) {
+      const validation = await this.validateWorkspace(clientSlug, true);
+      if (!validation.ok) {
+        throw new BadRequestException('Validate your workspace before sending a preview test.');
+      }
+
+      const previewAlreadyUsed = await this.events.hasSuccessfulEvent(client.id, 'HIRING_PREVIEW_TEST');
+      if (previewAlreadyUsed) {
+        throw new BadRequestException(
+          'Your free preview test is already used. Complete payment to keep sending test applications.',
+        );
+      }
+    }
 
     const roles = await this.notion.queryDatabase(clientSlug, client.notionDbRolesId!, {
       page_size: 1,
@@ -153,6 +173,15 @@ export class ClientWorkspaceController {
       submissionId: `test_${Date.now()}`,
       notes: 'Test submission triggered from the workspace dashboard.',
     });
+
+    if (client.paymentStatus !== PaymentStatus.PAID) {
+      await this.events.logEvent({
+        clientId: client.id,
+        type: 'HIRING_PREVIEW_TEST',
+        success: true,
+        meta: { roleId: role.id },
+      });
+    }
 
     const roleName = this.getPlainText(role.properties, ['Role Name', 'Name']) || 'your first role';
 

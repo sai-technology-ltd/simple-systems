@@ -7,6 +7,7 @@ import { HiringIntakeService } from '../webhooks/hiring-intake.service';
 import { NotionOauthService } from '../notion-oauth.service';
 import { NotionService } from '../notion/notion.service';
 import { SchemaValidatorService } from '../notion/schema-validator.service';
+import { EventLogService } from '../event-log.service';
 
 describe('ClientWorkspaceController', () => {
   let controller: ClientWorkspaceController;
@@ -16,6 +17,7 @@ describe('ClientWorkspaceController', () => {
   let notion: jest.Mocked<NotionService>;
   let oauth: jest.Mocked<NotionOauthService>;
   let validator: jest.Mocked<SchemaValidatorService>;
+  let events: jest.Mocked<EventLogService>;
 
   beforeEach(() => {
     clients = {
@@ -39,6 +41,10 @@ describe('ClientWorkspaceController', () => {
     validator = {
       validate: jest.fn(),
     } as unknown as jest.Mocked<SchemaValidatorService>;
+    events = {
+      hasSuccessfulEvent: jest.fn(),
+      logEvent: jest.fn(),
+    } as unknown as jest.Mocked<EventLogService>;
 
     controller = new ClientWorkspaceController(
       clients,
@@ -47,11 +53,13 @@ describe('ClientWorkspaceController', () => {
       notion,
       oauth,
       validator,
+      events,
     );
   });
 
   it('returns workspace summary for a configured client', async () => {
     clients.getBySlug.mockResolvedValue({
+      id: 'client-1',
       clientSlug: 'swift-transport',
       companyName: 'Swift Transport',
       replyToEmail: 'hiring@swift.com',
@@ -66,6 +74,7 @@ describe('ClientWorkspaceController', () => {
       monthlyEmailQuota: 500,
       updatedAt: new Date('2026-03-06T00:00:00.000Z'),
     } as never);
+    events.hasSuccessfulEvent.mockResolvedValue(false);
     notion.getDatabase.mockResolvedValue({ properties: {} } as never);
     validator.validate.mockReturnValue({
       valid: true,
@@ -80,6 +89,8 @@ describe('ClientWorkspaceController', () => {
         clientSlug: 'swift-transport',
         paymentPaid: true,
         validationPassed: true,
+        previewTestAvailable: false,
+        previewTestUsed: false,
         settings: expect.objectContaining({
           companyName: 'Swift Transport',
           replyToEmail: 'hiring@swift.com',
@@ -127,6 +138,7 @@ describe('ClientWorkspaceController', () => {
       paymentStatus: PaymentStatus.PAID,
     } as never);
     clients.getBySlug.mockResolvedValue({
+      id: 'client-1',
       clientSlug: 'swift-transport',
       notionAccessTokenEnc: 'encrypted',
       notionDbCandidatesId: 'candidates-db',
@@ -167,6 +179,7 @@ describe('ClientWorkspaceController', () => {
       paymentStatus: PaymentStatus.PAID,
     } as never);
     clients.getBySlug.mockResolvedValue({
+      id: 'client-1',
       clientSlug: 'swift-transport',
       notionAccessTokenEnc: 'encrypted',
       notionDbCandidatesId: 'candidates-db',
@@ -203,6 +216,7 @@ describe('ClientWorkspaceController', () => {
 
   it('returns validation issues in frontend format', async () => {
     clients.getBySlug.mockResolvedValue({
+      id: 'client-1',
       clientSlug: 'swift-transport',
       notionAccessTokenEnc: 'encrypted',
       notionDbCandidatesId: 'candidates-db',
@@ -216,6 +230,7 @@ describe('ClientWorkspaceController', () => {
       monthlyEmailQuota: 500,
       updatedAt: new Date('2026-03-06T00:00:00.000Z'),
     } as never);
+    events.hasSuccessfulEvent.mockResolvedValue(false);
     notion.getDatabase.mockResolvedValue({ properties: {} } as never);
     validator.validate.mockReturnValue({
       valid: false,
@@ -243,6 +258,7 @@ describe('ClientWorkspaceController', () => {
 
   it('returns a workspace issue when Notion is not connected', async () => {
     clients.getBySlug.mockResolvedValue({
+      id: 'client-1',
       clientSlug: 'swift-transport',
       notionAccessTokenEnc: null,
       notionDbCandidatesId: null,
@@ -257,6 +273,7 @@ describe('ClientWorkspaceController', () => {
       monthlyEmailQuota: 500,
       updatedAt: new Date('2026-03-06T00:00:00.000Z'),
     } as never);
+    events.hasSuccessfulEvent.mockResolvedValue(false);
 
     await expect(controller.getWorkspace('swift-transport')).resolves.toEqual(
       expect.objectContaining({
@@ -269,6 +286,7 @@ describe('ClientWorkspaceController', () => {
 
   it('returns a workspace issue when databases are missing', async () => {
     clients.getBySlug.mockResolvedValue({
+      id: 'client-1',
       clientSlug: 'swift-transport',
       notionAccessTokenEnc: 'encrypted',
       notionDbCandidatesId: 'candidates-db',
@@ -283,6 +301,7 @@ describe('ClientWorkspaceController', () => {
       monthlyEmailQuota: 500,
       updatedAt: new Date('2026-03-06T00:00:00.000Z'),
     } as never);
+    events.hasSuccessfulEvent.mockResolvedValue(false);
 
     await expect(controller.validate('swift-transport')).resolves.toEqual({
       ok: false,
@@ -298,6 +317,7 @@ describe('ClientWorkspaceController', () => {
 
   it('marks the workspace inactive when payment has failed', async () => {
     clients.getBySlug.mockResolvedValue({
+      id: 'client-1',
       clientSlug: 'swift-transport',
       notionAccessTokenEnc: null,
       notionDbCandidatesId: null,
@@ -312,6 +332,7 @@ describe('ClientWorkspaceController', () => {
       monthlyEmailQuota: 500,
       updatedAt: new Date('2026-03-06T00:00:00.000Z'),
     } as never);
+    events.hasSuccessfulEvent.mockResolvedValue(false);
 
     await expect(controller.getWorkspace('swift-transport')).resolves.toEqual(
       expect.objectContaining({
@@ -322,6 +343,7 @@ describe('ClientWorkspaceController', () => {
 
   it('returns a generic validation error when Notion validation fails in workspace view', async () => {
     clients.getBySlug.mockResolvedValue({
+      id: 'client-1',
       clientSlug: 'swift-transport',
       companyName: 'Swift Transport',
       replyToEmail: 'hiring@swift.com',
@@ -336,6 +358,7 @@ describe('ClientWorkspaceController', () => {
       monthlyEmailQuota: 500,
       updatedAt: new Date('2026-03-06T00:00:00.000Z'),
     } as never);
+    events.hasSuccessfulEvent.mockResolvedValue(false);
     notion.getDatabase.mockRejectedValue(new Error('Notion unavailable'));
 
     await expect(controller.getWorkspace('swift-transport')).resolves.toEqual(
@@ -419,9 +442,27 @@ describe('ClientWorkspaceController', () => {
 
   it('sends a backend-driven test submission', async () => {
     clients.findActiveBySlug.mockResolvedValue({
+      id: 'client-1',
       notionDbRolesId: 'roles-db',
       replyToEmail: 'hiring@swift.com',
+      paymentStatus: PaymentStatus.PENDING,
     } as never);
+    clients.getBySlug.mockResolvedValue({
+      id: 'client-1',
+      clientSlug: 'swift-transport',
+      notionAccessTokenEnc: 'encrypted',
+      notionDbCandidatesId: 'candidates-db',
+      notionDbRolesId: 'roles-db',
+      notionDbStagesId: 'stages-db',
+      paymentStatus: PaymentStatus.PENDING,
+    } as never);
+    events.hasSuccessfulEvent.mockResolvedValue(false);
+    notion.getDatabase.mockResolvedValue({ properties: {} } as never);
+    validator.validate.mockReturnValue({
+      valid: true,
+      missing: [],
+      fixes: [],
+    });
     notion.queryDatabase.mockResolvedValue({
       results: [
         {
@@ -447,12 +488,47 @@ describe('ClientWorkspaceController', () => {
       ok: true,
       message: 'Test application sent for Backend Engineer.',
     });
+    expect(events.logEvent).toHaveBeenCalledWith({
+      clientId: 'client-1',
+      type: 'HIRING_PREVIEW_TEST',
+      success: true,
+      meta: { roleId: 'role-1' },
+    });
+  });
+
+  it('rejects test submission after the free preview is used', async () => {
+    clients.findActiveBySlug.mockResolvedValue({
+      id: 'client-1',
+      notionDbRolesId: 'roles-db',
+      replyToEmail: 'hiring@swift.com',
+      paymentStatus: PaymentStatus.PENDING,
+    } as never);
+    clients.getBySlug.mockResolvedValue({
+      id: 'client-1',
+      notionAccessTokenEnc: 'encrypted',
+      notionDbCandidatesId: 'candidates-db',
+      notionDbRolesId: 'roles-db',
+      notionDbStagesId: 'stages-db',
+      paymentStatus: PaymentStatus.PENDING,
+    } as never);
+    events.hasSuccessfulEvent.mockResolvedValue(true);
+    notion.getDatabase.mockResolvedValue({ properties: {} } as never);
+    validator.validate.mockReturnValue({
+      valid: true,
+      missing: [],
+      fixes: [],
+    });
+
+    await expect(controller.testSubmission('swift-transport')).rejects.toThrow(
+      'Your free preview test is already used. Complete payment to keep sending test applications.',
+    );
   });
 
   it('rejects test submission when no roles exist', async () => {
     clients.findActiveBySlug.mockResolvedValue({
       notionDbRolesId: 'roles-db',
       replyToEmail: 'hiring@swift.com',
+      paymentStatus: PaymentStatus.PENDING,
     } as never);
     notion.queryDatabase.mockResolvedValue({
       results: [],
@@ -467,6 +543,7 @@ describe('ClientWorkspaceController', () => {
     clients.findActiveBySlug.mockResolvedValue({
       notionDbRolesId: 'roles-db',
       replyToEmail: null,
+      paymentStatus: PaymentStatus.PENDING,
     } as never);
 
     await expect(controller.testSubmission('swift-transport')).rejects.toBeInstanceOf(

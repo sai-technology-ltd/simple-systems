@@ -1050,11 +1050,31 @@ export default function OnboardingPage() {
                         </div>
                       </>
                     ) : (
-                      <StatusBanner
-                        tone="warning"
-                        title="Activate your workspace to go live"
-                        description="You can finish setup now, but role links stay inactive until payment is complete."
-                      />
+                      <div className="space-y-4">
+                        <StatusBanner
+                          tone={workspace?.previewTestAvailable ? "info" : "warning"}
+                          title={
+                            workspace?.previewTestAvailable
+                              ? "You can run one preview test before payment"
+                              : "Activate your workspace to go live"
+                          }
+                          description={
+                            workspace?.previewTestAvailable
+                              ? "We’ll send one backend-driven test application into Notion so you can confirm the setup before activation."
+                              : workspace?.previewTestUsed
+                                ? "Your free preview test is already used. Complete payment to keep sending test applications and make role links live."
+                                : "You can finish setup now, but role links stay inactive until payment is complete."
+                          }
+                        />
+                        <div className="flex flex-wrap gap-3">
+                          <Button
+                            onClick={handleSendTest}
+                            disabled={testing || !workspace?.previewTestAvailable}
+                          >
+                            {testing ? "Sending test..." : "Send preview test"}
+                          </Button>
+                        </div>
+                      </div>
                     )}
                   </div>
                 </section>

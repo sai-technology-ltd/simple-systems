@@ -213,8 +213,15 @@ export default function RolesPage() {
                 Roles are managed in Notion. Copy links here when they are ready to share.
               </p>
             </div>
-            <Button onClick={handleTestSubmission} disabled={testing || !workspace?.paymentPaid}>
-              {testing ? "Sending..." : "Send test application"}
+            <Button
+              onClick={handleTestSubmission}
+              disabled={testing || (!workspace?.paymentPaid && !workspace?.previewTestAvailable)}
+            >
+              {testing
+                ? "Sending..."
+                : workspace?.paymentPaid
+                  ? "Send test application"
+                  : "Send preview test"}
             </Button>
           </div>
 

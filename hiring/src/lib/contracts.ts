@@ -25,6 +25,8 @@ export interface WorkspaceSummary {
   selectedDatabases?: Partial<DatabaseSelection>;
   validationPassed: boolean;
   validationMessage?: string | null;
+  previewTestAvailable?: boolean;
+  previewTestUsed?: boolean;
   webhookUrl?: string | null;
   setupGuideUrl?: string | null;
   emailsSentThisMonth?: number | null;
