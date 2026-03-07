@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowRight, CheckCircle2, ExternalLink, Mail, RefreshCw } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircle2,
+  ExternalLink,
+  Mail,
+  RefreshCw,
+  Sparkles,
+} from "lucide-react";
 import { CopyField } from "@/components/ui/copy-field";
 import { Button } from "@/components/ui/button";
 import { StatusBanner } from "@/components/status-banner";
@@ -13,6 +20,9 @@ import { readStoredClientSlug } from "@/lib/workspace-storage";
 
 export const dynamic = "force-dynamic";
 
+const MISSING_ROLES_MESSAGE =
+  "Add at least one role in your Notion Roles database, then refresh this page before sending a test application.";
+
 export default function RolesPage() {
   const [clientSlug, setClientSlug] = useState("");
   const [workspace, setWorkspace] = useState<WorkspaceSummary | null>(null);
@@ -22,6 +32,15 @@ export default function RolesPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const { toast } = useToast();
+  const hasRoles = roles.length > 0;
+  const canSendPreviewTest = Boolean(workspace?.previewTestAvailable && hasRoles);
+  const canSendLiveTest = Boolean(workspace?.paymentPaid && hasRoles);
+  const canSendTest = canSendLiveTest || canSendPreviewTest;
+  const testButtonLabel = testing
+    ? "Sending..."
+    : workspace?.paymentPaid
+      ? "Send test application"
+      : "Send preview test";
 
   const loadWorkspace = useCallback(async (slug: string) => {
     setLoading(true);
@@ -67,6 +86,16 @@ export default function RolesPage() {
       return;
     }
 
+    if (!hasRoles) {
+      setError(MISSING_ROLES_MESSAGE);
+      toast({
+        tone: "warning",
+        title: "Add a role before testing",
+        description: "Test submissions need one live role in your selected Roles database.",
+      });
+      return;
+    }
+
     setTesting(true);
     setMessage("");
     setError("");
@@ -82,7 +111,10 @@ export default function RolesPage() {
         title: response.message || "Test application sent.",
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Unable to send a test application.";
+      const rawMessage = err instanceof Error ? err.message : "Unable to send a test application.";
+      const message = rawMessage.includes("No roles found")
+        ? MISSING_ROLES_MESSAGE
+        : rawMessage;
       setError(message);
       toast({ tone: "error", title: message });
     } finally {
@@ -202,12 +234,55 @@ export default function RolesPage() {
 
         {message ? <StatusBanner tone="success" title={message} /> : null}
         {error ? <StatusBanner tone="error" title={error} /> : null}
+        {!hasRoles ? (
+          <StatusBanner
+            tone="warning"
+            title="Test submission is waiting on your first role"
+            description="Create at least one role entry in your Notion Roles database. The test uses that role to generate a sample candidate submission."
+          />
+        ) : null}
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <section className="animate-fade-up hover-lift rounded-2xl border border-zinc-100 bg-white p-6">
+          <div className="rounded-2xl border border-orange-200 bg-[linear-gradient(135deg,rgba(255,247,237,0.95),rgba(255,255,255,1))] p-5">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-500 text-white shadow-sm">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-700">
+                  How test submission works
+                </p>
+                <h2 className="mt-1 text-lg font-semibold text-zinc-900">
+                  One click, one sample candidate, one existing role
+                </h2>
+                <div className="mt-4 grid gap-3 md:grid-cols-3">
+                  <div className="rounded-xl border border-white/80 bg-white/80 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">1. Prepare</p>
+                    <p className="mt-1 text-sm text-zinc-700">
+                      Connect Notion, save the Roles database, and add at least one role row.
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-white/80 bg-white/80 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">2. Send</p>
+                    <p className="mt-1 text-sm text-zinc-700">
+                      Use the test button here to post a sample application through the real backend flow.
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-white/80 bg-white/80 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">3. Check</p>
+                    <p className="mt-1 text-sm text-zinc-700">
+                      Confirm the candidate lands in Notion with the expected role and stage mapping.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="flex items-center justify-between gap-4">
-            <div>
+            <div className="pt-6">
               <h2 className="text-xl font-semibold text-zinc-900">Role links</h2>
               <p className="mt-1 text-sm text-zinc-500">
                 Roles are managed in Notion. Copy links here when they are ready to share.
@@ -215,14 +290,36 @@ export default function RolesPage() {
             </div>
             <Button
               onClick={handleTestSubmission}
-              disabled={testing || (!workspace?.paymentPaid && !workspace?.previewTestAvailable)}
+              disabled={testing || !canSendTest}
+              title={!hasRoles ? "Add a role in Notion before sending a test application." : undefined}
             >
-              {testing
-                ? "Sending..."
-                : workspace?.paymentPaid
-                  ? "Send test application"
-                  : "Send preview test"}
+              {testButtonLabel}
             </Button>
+          </div>
+
+          <div className="mt-6 grid gap-3 md:grid-cols-3">
+            <div className="rounded-xl border border-zinc-100 bg-zinc-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">Roles</p>
+              <p className="mt-2 text-sm font-medium text-zinc-900">
+                {hasRoles ? `${roles.length} ready to test` : "No role added yet"}
+              </p>
+            </div>
+            <div className="rounded-xl border border-zinc-100 bg-zinc-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">Test access</p>
+              <p className="mt-2 text-sm font-medium text-zinc-900">
+                {workspace?.paymentPaid
+                  ? "Unlimited after activation"
+                  : workspace?.previewTestAvailable
+                    ? "One preview test available"
+                    : "Preview locked"}
+              </p>
+            </div>
+            <div className="rounded-xl border border-zinc-100 bg-zinc-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">Next action</p>
+              <p className="mt-2 text-sm font-medium text-zinc-900">
+                {hasRoles ? "Send a test and verify it in Notion" : "Create your first role in Notion"}
+              </p>
+            </div>
           </div>
 
           <div className="mt-6 space-y-4">
@@ -251,8 +348,12 @@ export default function RolesPage() {
                 </div>
               ))
             ) : (
-              <div className="rounded-xl bg-zinc-50 p-5 text-sm text-zinc-500">
-                No roles found yet. Add roles in your Notion Roles database, then refresh this page.
+              <div className="rounded-2xl border border-dashed border-orange-200 bg-orange-50/70 p-5">
+                <p className="text-sm font-medium text-zinc-900">No roles found yet</p>
+                <p className="mt-2 text-sm text-zinc-600">
+                  Add at least one row in your Notion Roles database with a role name and public slug,
+                  then refresh this page. Test submission stays disabled until that role exists.
+                </p>
               </div>
             )}
           </div>
