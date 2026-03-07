@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 :root {
+  --font-heading: "Avenir Next", "Segoe UI", sans-serif;
+  --font-body: "Avenir Next", "Segoe UI", sans-serif;
   --background: 242 245 247;
   --surface: 255 255 255;
   --surface-muted: 233 238 242;
@@ -32,7 +34,9 @@ body {
   font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
   background-image:
     radial-gradient(circle at top left, rgba(var(--accent), 0.08), transparent 28%),
+    radial-gradient(circle at top right, rgba(251, 146, 60, 0.08), transparent 24%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(242, 245, 247, 0.96));
+  background-attachment: fixed;
 }
 
 @keyframes fade-up {
@@ -119,4 +123,42 @@ h3,
 ::selection {
   background: rgba(var(--accent), 0.22);
   color: rgb(var(--foreground));
+}
+
+.app-surface {
+  border: 1px solid rgba(var(--border), 0.85);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.06);
+  backdrop-filter: blur(16px);
+}
+
+.app-surface-muted {
+  border: 1px solid rgba(var(--border), 0.8);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.86));
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+}
+
+.app-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.app-kicker {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgb(var(--foreground-muted));
+}
+
+.app-metric-card {
+  border: 1px solid rgba(var(--border), 0.82);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.04);
+}
+
+.app-sticky {
+  position: sticky;
+  top: 5.5rem;
 }

@@ -151,15 +151,15 @@ export default function RolesPage() {
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-12">
+    <main className="mx-auto max-w-7xl px-6 pb-12 pt-24">
       <div className="animate-fade-up flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-sm font-medium text-orange-600">Workspace home</p>
-          <h1 className="text-3xl font-bold text-zinc-900">
+          <p className="app-kicker text-orange-600">Workspace home</p>
+          <h1 className="brand-heading text-3xl font-bold text-zinc-900 md:text-4xl">
             {workspace?.settings.companyName || "Simple Hiring"}
           </h1>
-          <p className="mt-2 text-zinc-500">
-            Keep setup visible, copy live role links, and run a test application when needed.
+          <p className="mt-3 max-w-2xl text-zinc-500">
+            Keep setup visible, copy role links, and run a test application without jumping back through the full onboarding flow.
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
@@ -182,25 +182,25 @@ export default function RolesPage() {
       </div>
 
       <div className="mt-8 grid gap-4 md:grid-cols-4">
-        <div className="animate-fade-up hover-lift rounded-2xl border border-zinc-100 bg-white p-5">
+        <div className="animate-fade-up hover-lift app-metric-card rounded-2xl p-5">
           <p className="text-sm text-zinc-500">Setup</p>
           <p className="mt-2 text-lg font-semibold text-zinc-900">
             {workspace?.validationPassed ? "Complete" : "Needs attention"}
           </p>
         </div>
-        <div className="animate-fade-up delay-1 hover-lift rounded-2xl border border-zinc-100 bg-white p-5">
+        <div className="animate-fade-up delay-1 hover-lift app-metric-card rounded-2xl p-5">
           <p className="text-sm text-zinc-500">Activation</p>
           <p className="mt-2 text-lg font-semibold text-zinc-900">
             {workspace?.paymentPaid ? "Active" : "Inactive"}
           </p>
         </div>
-        <div className="animate-fade-up delay-2 hover-lift rounded-2xl border border-zinc-100 bg-white p-5">
+        <div className="animate-fade-up delay-2 hover-lift app-metric-card rounded-2xl p-5">
           <p className="text-sm text-zinc-500">Email</p>
           <p className="mt-2 text-lg font-semibold text-zinc-900">
             {workspace?.settings.emailEnabled ? "Enabled" : "Paused"}
           </p>
         </div>
-        <div className="animate-fade-up delay-3 hover-lift rounded-2xl border border-zinc-100 bg-white p-5">
+        <div className="animate-fade-up delay-3 hover-lift app-metric-card rounded-2xl p-5">
           <p className="text-sm text-zinc-500">Emails this month</p>
           <p className="mt-2 text-lg font-semibold text-zinc-900">
             {workspace?.emailsSentThisMonth ?? 0}
@@ -243,8 +243,8 @@ export default function RolesPage() {
         ) : null}
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <section className="animate-fade-up hover-lift rounded-2xl border border-zinc-100 bg-white p-6">
+      <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <section className="animate-fade-up hover-lift app-surface rounded-[1.5rem] p-6">
           <div className="rounded-2xl border border-orange-200 bg-[linear-gradient(135deg,rgba(255,247,237,0.95),rgba(255,255,255,1))] p-5">
             <div className="flex items-start gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-500 text-white shadow-sm">
@@ -298,13 +298,13 @@ export default function RolesPage() {
           </div>
 
           <div className="mt-6 grid gap-3 md:grid-cols-3">
-            <div className="rounded-xl border border-zinc-100 bg-zinc-50 p-4">
+            <div className="app-surface-muted rounded-xl p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">Roles</p>
               <p className="mt-2 text-sm font-medium text-zinc-900">
                 {hasRoles ? `${roles.length} ready to test` : "No role added yet"}
               </p>
             </div>
-            <div className="rounded-xl border border-zinc-100 bg-zinc-50 p-4">
+            <div className="app-surface-muted rounded-xl p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">Test access</p>
               <p className="mt-2 text-sm font-medium text-zinc-900">
                 {workspace?.paymentPaid
@@ -314,7 +314,7 @@ export default function RolesPage() {
                     : "Preview locked"}
               </p>
             </div>
-            <div className="rounded-xl border border-zinc-100 bg-zinc-50 p-4">
+            <div className="app-surface-muted rounded-xl p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">Next action</p>
               <p className="mt-2 text-sm font-medium text-zinc-900">
                 {hasRoles ? "Send a test and verify it in Notion" : "Create your first role in Notion"}
@@ -325,7 +325,7 @@ export default function RolesPage() {
           <div className="mt-6 space-y-4">
             {roles.length ? (
               roles.map((role) => (
-                <div key={role.id} className="animate-fade-in rounded-xl border border-zinc-100 p-4">
+                <div key={role.id} className="animate-fade-in app-surface-muted rounded-2xl p-4">
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
                       <h3 className="font-medium text-zinc-900">{role.name}</h3>
@@ -359,12 +359,12 @@ export default function RolesPage() {
           </div>
         </section>
 
-        <aside className="space-y-4">
-          <div className="animate-soft-scale rounded-2xl border border-zinc-100 bg-white p-6">
+        <aside className="app-sticky space-y-4">
+          <div className="animate-soft-scale app-surface rounded-[1.5rem] p-6">
             <h2 className="text-lg font-semibold text-zinc-900">Quick links</h2>
             <div className="mt-4 space-y-3">
               {workspace?.webhookUrl ? (
-                <CopyField label="Webhook URL" value={workspace.webhookUrl} />
+                <CopyField label="Application endpoint" value={workspace.webhookUrl} />
               ) : null}
               {workspace?.setupGuideUrl ? (
                 <a
@@ -377,10 +377,17 @@ export default function RolesPage() {
                   <ExternalLink className="h-4 w-4" />
                 </a>
               ) : null}
+              <Link
+                href="/settings"
+                className="inline-flex items-center gap-2 text-sm font-medium text-orange-600"
+              >
+                Open workspace settings
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
           </div>
 
-          <div className="animate-soft-scale delay-1 rounded-2xl border border-zinc-100 bg-white p-6">
+          <div className="animate-soft-scale delay-1 app-surface-muted rounded-[1.5rem] p-6">
             <h2 className="text-lg font-semibold text-zinc-900">Email details</h2>
             <div className="mt-4 space-y-3 text-sm text-zinc-600">
               <div className="flex items-start gap-3">

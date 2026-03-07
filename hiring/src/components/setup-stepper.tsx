@@ -25,9 +25,9 @@ export function SetupStepper({ steps, currentStep }: SetupStepperProps) {
         </span>
         <span>{Math.round(progress)}%</span>
       </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
+      <div className="h-2 overflow-hidden rounded-full bg-white/80 ring-1 ring-slate-200/80">
         <div
-          className="h-full rounded-full bg-slate-700 transition-all duration-500"
+          className="h-full rounded-full bg-gradient-to-r from-slate-900 via-slate-700 to-orange-500 transition-all duration-500"
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -40,26 +40,28 @@ export function SetupStepper({ steps, currentStep }: SetupStepperProps) {
             <div
               key={step.id}
               className={cn(
-                "rounded-xl border px-3 py-3 text-sm transition-colors",
+                "rounded-2xl border px-4 py-4 text-sm transition-all shadow-sm",
                 active
-                  ? "border-slate-300 bg-slate-100"
-                  : "border-slate-200 bg-white",
+                  ? "border-slate-300 bg-white shadow-md shadow-slate-900/5"
+                  : complete
+                    ? "border-emerald-200 bg-emerald-50/70"
+                    : "border-slate-200 bg-white/70",
               )}
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <div
                   className={cn(
-                    "flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold",
+                    "flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold shadow-sm",
                     complete
-                      ? "bg-[rgb(var(--success-soft))] text-slate-700"
+                      ? "bg-emerald-600 text-white"
                       : active
-                        ? "bg-slate-700 text-white"
+                        ? "bg-slate-900 text-white"
                         : "bg-slate-100 text-slate-500",
                   )}
                 >
                   {complete ? <Check className="h-3.5 w-3.5" /> : step.number}
                 </div>
-                <span className={cn("font-medium", active ? "text-slate-800" : "text-slate-600")}>
+                <span className={cn("font-medium", active ? "text-slate-900" : "text-slate-600")}>
                   {step.title}
                 </span>
               </div>

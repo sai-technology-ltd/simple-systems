@@ -17,7 +17,7 @@ import {
 } from "react";
 import { cn } from "@/lib/utils";
 
-type ToastTone = "info" | "success" | "error";
+type ToastTone = "info" | "success" | "warning" | "error";
 
 type ToastItem = {
   id: number;
@@ -41,12 +41,14 @@ const ToastContext = createContext<ToastContextValue | null>(null);
 const toneStyles = {
   info: "border-slate-200 bg-white text-slate-800",
   success: "border-slate-200 bg-[rgb(var(--success-soft))] text-slate-800",
+  warning: "border-amber-200 bg-amber-50 text-amber-900",
   error: "border-red-200 bg-red-50 text-red-900",
 } as const;
 
 const toneIcons = {
   info: Info,
   success: CheckCircle2,
+  warning: AlertCircle,
   error: AlertCircle,
 } as const;
 

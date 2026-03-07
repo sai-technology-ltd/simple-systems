@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   CheckCircle2,
@@ -41,13 +41,20 @@ import {
   ONE_TIME_PRICE_USD,
   PRODUCT_NAME,
   REQUIRED_DATABASES,
+  SIMPLE_HIRING_REGULAR_PRICE_USD,
 } from "@/lib/product";
-import { readStoredClientSlug, storeClientSlug } from "@/lib/workspace-storage";
+import {
+  clearStoredPaymentReference,
+  readStoredClientSlug,
+  readStoredPaymentReference,
+  storeClientSlug,
+  storePaymentReference,
+} from "@/lib/workspace-storage";
 
 export const dynamic = "force-dynamic";
 
-const MISSING_ROLES_MESSAGE =
-  "Add at least one role in your Notion Roles database, then refresh this page before sending a test application.";
+const PADDLE_CLIENT_TOKEN = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN || "";
+const PADDLE_ENV = process.env.NEXT_PUBLIC_PADDLE_ENV || "sandbox";
 
 const EMPTY_SELECTION: DatabaseSelection = {
   candidatesDatabaseId: "",
@@ -55,12 +62,102 @@ const EMPTY_SELECTION: DatabaseSelection = {
   stagesDatabaseId: "",
 };
 
+type CheckoutMode = NonNullable<PaymentInitializeResponse["checkoutMode"]>;
+
+type PaddleEvent = {
+  name?: string;
+};
+
+declare global {
+  interface Window {
+    LemonSqueezy?: {
+      Url?: {
+        Open: (url: string) => void;
+      };
+      Setup?: (options: {
+        eventHandler?: (event: { event?: string }) => void;
+      }) => void;
+    };
+    createLemonSqueezy?: () => void;
+    Paddle?: {
+      Environment?: {
+        set: (environment: string) => void;
+      };
+      Initialize: (options: {
+        token: string;
+        eventCallback?: (event: PaddleEvent) => void;
+      }) => void;
+      Checkout: {
+        open: (options: {
+          transactionId: string;
+          settings?: Record<string, string>;
+        }) => void;
+      };
+    };
+    Paystack?: new () => {
+      resumeTransaction: (accessCode: string) => void;
+    };
+    __simpleSystemsOnCheckoutComplete?: () => void;
+    __simpleSystemsPaddleInitialized?: boolean;
+  }
+}
+
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+function formatPaymentProvider(provider?: string | null) {
+  if (!provider) {
+    return "payment provider";
+  }
+
+  switch (provider.toLowerCase()) {
+    case "lemonsqueezy":
+      return "Lemon Squeezy";
+    case "paddle":
+      return "Paddle";
+    default:
+      return provider;
+  }
+}
+
+function isOverlayMode(mode?: string | null): mode is CheckoutMode {
+  return mode === "overlay" || mode === "popup" || mode === "redirect";
+}
+
+function loadScript(src: string) {
+  if (typeof window === "undefined") {
+    return Promise.reject(new Error("Window is not available."));
+  }
+
+  return new Promise<void>((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>(
+      `script[src="${src}"]`
+    );
+
+    if (existing?.dataset.loaded === "true") {
+      resolve();
+      return;
+    }
+
+    const script = existing || document.createElement("script");
+    script.src = src;
+    script.async = true;
+
+    script.onload = () => {
+      script.dataset.loaded = "true";
+      resolve();
+    };
+    script.onerror = () => reject(new Error(`Failed to load ${src}`));
+
+    if (!existing) {
+      document.body.appendChild(script);
+    }
+  });
 }
 
 function getActiveStep(workspace: WorkspaceSummary | null, clientSlug: string) {
@@ -165,6 +262,11 @@ export default function OnboardingPage() {
   const [testing, setTesting] = useState(false);
   const [formMessage, setFormMessage] = useState("");
   const [error, setError] = useState("");
+  const paystackPollRef = useRef<number | null>(null);
+  const paystackPollDeadlineRef = useRef(0);
+  const verifyPaymentRef = useRef<(referenceOverride?: string, silent?: boolean) => Promise<void>>(
+    async () => {}
+  );
 
   const [companyName, setCompanyName] = useState("");
   const [replyToEmail, setReplyToEmail] = useState("");
@@ -172,10 +274,18 @@ export default function OnboardingPage() {
   const [emailEnabled, setEmailEnabled] = useState(true);
   const { toast } = useToast();
 
+  const stopPaystackPolling = useCallback(() => {
+    if (paystackPollRef.current !== null) {
+      window.clearInterval(paystackPollRef.current);
+      paystackPollRef.current = null;
+    }
+    paystackPollDeadlineRef.current = 0;
+  }, []);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const slug = params.get("clientSlug") || readStoredClientSlug();
-    const reference = params.get("reference") || "";
+    const reference = params.get("reference") || readStoredPaymentReference();
 
     if (slug) {
       setClientSlug(slug);
@@ -186,6 +296,8 @@ export default function OnboardingPage() {
       setPaymentReference(reference);
     }
   }, [toast]);
+
+  useEffect(() => stopPaystackPolling, [stopPaystackPolling]);
 
   const loadWorkspace = useCallback(async (slug: string, silent: boolean) => {
     if (!silent) {
@@ -206,6 +318,9 @@ export default function OnboardingPage() {
 
       setWorkspace(workspaceData);
       setRoles(rolesData);
+      if (workspaceData.paymentPaid) {
+        clearStoredPaymentReference();
+      }
       setCompanyName(workspaceData.settings.companyName || "");
       setReplyToEmail(workspaceData.settings.replyToEmail || "");
       setLogoUrl(workspaceData.settings.logoUrl || "");
@@ -453,12 +568,17 @@ export default function OnboardingPage() {
         `/clients/${clientSlug}/payments/initialize`,
         {
           email: replyToEmail,
+          amount: ONE_TIME_PRICE_USD,
           callbackUrl: `${window.location.origin}/onboarding?clientSlug=${clientSlug}`,
         },
-        "We couldn't start your Paystack checkout."
+        "We couldn't start your payment checkout."
       );
 
-      window.location.href = response.authorizationUrl;
+      if (response.reference) {
+        setPaymentReference(response.reference);
+        storePaymentReference(response.reference);
+      }
+      await launchPaymentCheckout(response);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unable to start payment.";
       setError(message);
@@ -489,12 +609,18 @@ export default function OnboardingPage() {
         throw new Error("Payment is still pending. Finish checkout, then verify again.");
       }
 
+      if (response.reference) {
+        setPaymentReference(response.reference);
+      }
+      clearStoredPaymentReference();
+      stopPaystackPolling();
       await loadWorkspace(clientSlug, true);
+      const providerLabel = formatPaymentProvider(response.provider);
       setFormMessage("Payment confirmed. Your workspace is now active.");
       toast({
         tone: "success",
         title: "Payment confirmed",
-        description: "Your workspace is now active.",
+        description: `Your workspace is now active via ${providerLabel}.`,
       });
     } catch (err) {
       if (!silent) {
@@ -507,7 +633,128 @@ export default function OnboardingPage() {
         setSaving(false);
       }
     }
-  }, [clientSlug, paymentReference, loadWorkspace, toast]);
+  }, [clientSlug, paymentReference, loadWorkspace, stopPaystackPolling, toast]);
+
+  useEffect(() => {
+    verifyPaymentRef.current = verifyPayment;
+  }, [verifyPayment]);
+
+  const startPaystackPolling = useCallback(
+    (reference: string) => {
+      stopPaystackPolling();
+      paystackPollDeadlineRef.current = Date.now() + 2 * 60 * 1000;
+      paystackPollRef.current = window.setInterval(() => {
+        if (Date.now() >= paystackPollDeadlineRef.current) {
+          stopPaystackPolling();
+          return;
+        }
+
+        void verifyPaymentRef.current(reference, true);
+      }, 3000);
+    },
+    [stopPaystackPolling]
+  );
+
+  const ensureLemonSqueezy = useCallback(async () => {
+    await loadScript("https://app.lemonsqueezy.com/js/lemon.js");
+    window.createLemonSqueezy?.();
+    window.LemonSqueezy?.Setup?.({
+      eventHandler: (event) => {
+        if (event.event === "Checkout.Success") {
+          window.__simpleSystemsOnCheckoutComplete?.();
+        }
+      },
+    });
+  }, []);
+
+  const ensurePaddle = useCallback(async () => {
+    if (!PADDLE_CLIENT_TOKEN) {
+      throw new Error("Paddle overlay requires NEXT_PUBLIC_PADDLE_CLIENT_TOKEN.");
+    }
+
+    await loadScript("https://cdn.paddle.com/paddle/v2/paddle.js");
+
+    if (!window.__simpleSystemsPaddleInitialized) {
+      window.Paddle?.Environment?.set(PADDLE_ENV);
+      window.Paddle?.Initialize({
+        token: PADDLE_CLIENT_TOKEN,
+        eventCallback: (event) => {
+          if (event.name === "checkout.completed") {
+            window.__simpleSystemsOnCheckoutComplete?.();
+          }
+        },
+      });
+      window.__simpleSystemsPaddleInitialized = true;
+    }
+  }, []);
+
+  const ensurePaystack = useCallback(async () => {
+    await loadScript("https://js.paystack.co/v2/inline.js");
+  }, []);
+
+  const launchPaymentCheckout = useCallback(
+    async (response: PaymentInitializeResponse) => {
+      const provider = response.provider?.toLowerCase();
+      const mode = isOverlayMode(response.checkoutMode)
+        ? response.checkoutMode
+        : "redirect";
+      const reference = response.reference || paymentReference;
+
+      window.__simpleSystemsOnCheckoutComplete = () => {
+        if (reference) {
+          void verifyPaymentRef.current(reference, true);
+        }
+      };
+
+      try {
+        if (provider === "lemonsqueezy" && mode === "overlay" && response.checkoutUrl) {
+          await ensureLemonSqueezy();
+          window.LemonSqueezy?.Url?.Open(response.checkoutUrl);
+          setSaving(false);
+          return;
+        }
+
+        if (provider === "paddle" && mode === "overlay" && response.checkoutId) {
+          await ensurePaddle();
+          window.Paddle?.Checkout.open({
+            transactionId: response.checkoutId,
+            settings: {
+              displayMode: "overlay",
+              theme: "light",
+              variant: "one-page",
+            },
+          });
+          setSaving(false);
+          return;
+        }
+
+        if (provider === "paystack" && mode === "popup" && response.accessCode) {
+          await ensurePaystack();
+          if (!reference) {
+            throw new Error("Missing payment reference for Paystack verification.");
+          }
+          startPaystackPolling(reference);
+          const paystack = window.Paystack ? new window.Paystack() : null;
+          if (!paystack) {
+            throw new Error("Paystack popup is unavailable.");
+          }
+          paystack.resumeTransaction(response.accessCode);
+          setSaving(false);
+          return;
+        }
+      } catch (err) {
+        const providerLabel = formatPaymentProvider(response.provider);
+        toast({
+          tone: "warning",
+          title: `Falling back to hosted ${providerLabel} checkout`,
+          description: err instanceof Error ? err.message : "Popup checkout failed to open.",
+        });
+      }
+
+      window.location.href = response.authorizationUrl;
+    },
+    [ensureLemonSqueezy, ensurePaddle, ensurePaystack, paymentReference, startPaystackPolling, toast]
+  );
 
   useEffect(() => {
     if (!clientSlug || !paymentReference) {
@@ -519,16 +766,6 @@ export default function OnboardingPage() {
 
   async function handleSendTest() {
     if (!clientSlug) {
-      return;
-    }
-
-    if (!roles.length) {
-      setError(MISSING_ROLES_MESSAGE);
-      toast({
-        tone: "warning",
-        title: "Add a role before testing",
-        description: "Test submissions need one role row in your selected Roles database.",
-      });
       return;
     }
 
@@ -547,10 +784,7 @@ export default function OnboardingPage() {
         title: response.message || "Test application sent successfully.",
       });
     } catch (err) {
-      const rawMessage = err instanceof Error ? err.message : "Unable to send a test submission.";
-      const message = rawMessage.includes("No roles found")
-        ? MISSING_ROLES_MESSAGE
-        : rawMessage;
+      const message = err instanceof Error ? err.message : "Unable to send a test submission.";
       setError(message);
       toast({ tone: "error", title: message });
     } finally {
@@ -600,9 +834,12 @@ export default function OnboardingPage() {
     }));
   }, [validation]);
   const hasRoles = roles.length > 0;
-  const canSendPreviewTest = Boolean(workspace?.previewTestAvailable && hasRoles);
-  const canSendLiveTest = Boolean(workspace?.paymentPaid && hasRoles);
-  const canSendTest = canSendLiveTest || canSendPreviewTest;
+  const canSendTest = Boolean(
+    roles.length > 0 &&
+      workspace?.settings.replyToEmail &&
+      workspace.validationPassed &&
+      (workspace.paymentPaid || workspace.previewTestAvailable)
+  );
   const testButtonLabel = testing
     ? "Sending test..."
     : workspace?.paymentPaid
@@ -935,11 +1172,20 @@ export default function OnboardingPage() {
                   <div className="space-y-4 p-8">
                     <div className="rounded-2xl bg-slate-800 p-6 text-white">
                       <p className="text-sm text-slate-300">One-time activation</p>
-                      <div className="mt-2 flex items-end gap-2">
+                      <div className="mt-3 inline-flex items-center rounded-full bg-orange-500/15 px-3 py-1 text-xs font-medium uppercase tracking-[0.14em] text-orange-200">
+                        Launch offer
+                      </div>
+                      <div className="mt-3 flex flex-wrap items-end gap-3">
+                        <span className="text-lg text-slate-400 line-through">
+                          {formatCurrency(SIMPLE_HIRING_REGULAR_PRICE_USD)}
+                        </span>
                         <span className="text-4xl font-bold">{formatCurrency(ONE_TIME_PRICE_USD)}</span>
                         <span className="pb-1 text-sm text-slate-400">paid once</span>
                       </div>
                       <p className="mt-4 max-w-xl text-sm text-slate-300">
+                        Launch price for early customers. Regular price {formatCurrency(SIMPLE_HIRING_REGULAR_PRICE_USD)}.
+                      </p>
+                      <p className="mt-3 max-w-xl text-sm text-slate-300">
                         Complete setup first, then activate when you’re ready to accept live applications.
                       </p>
                     </div>
@@ -960,7 +1206,7 @@ export default function OnboardingPage() {
                         }
                         description={
                           workspace?.validationPassed
-                            ? "Checkout happens with Paystack. You only pay once."
+                            ? "Checkout happens with your configured payment provider. You only pay once."
                             : "Connect your workspace and validate the three databases before payment."
                         }
                       />
@@ -971,7 +1217,9 @@ export default function OnboardingPage() {
                         onClick={beginPayment}
                         disabled={saving || !workspace?.validationPassed || workspace?.paymentPaid}
                       >
-                        {saving && activeStep === 4 ? "Opening Paystack..." : "Pay with Paystack"}
+                        {saving && activeStep === 4
+                          ? "Opening checkout..."
+                          : "Pay and activate"}
                       </Button>
                       <button
                         type="button"
@@ -1026,7 +1274,7 @@ export default function OnboardingPage() {
                                 What happens
                               </p>
                               <p className="mt-1 text-sm text-slate-700">
-                                The backend submits a sample application so you can verify the full flow.
+                                We send a sample application so you can verify the full flow before going live.
                               </p>
                             </div>
                             <div className="rounded-xl border border-white/80 bg-white/85 p-3">
@@ -1088,11 +1336,13 @@ export default function OnboardingPage() {
                             ))}
                           </div>
                         ) : (
-                          <StatusBanner
-                            tone="warning"
-                            title="No roles found yet"
-                            description="Add at least one role in your Notion Roles database, then refresh this page to unlock live links and test submission."
-                          />
+                          <div className="rounded-3xl border border-dashed border-amber-300 bg-[linear-gradient(135deg,rgba(255,251,235,1),rgba(255,247,237,1))] p-6">
+                            <p className="text-sm font-semibold text-amber-950">Your Roles database is empty</p>
+                            <p className="mt-2 max-w-xl text-sm leading-6 text-amber-900/80">
+                              Add the first role row in Notion, then refresh this page to generate live links and unlock
+                              test submissions.
+                            </p>
+                          </div>
                         )}
 
                         {workspace.webhookUrl ? (
