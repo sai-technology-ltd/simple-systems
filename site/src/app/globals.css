@@ -10,6 +10,8 @@
   --accent: 251 146 60;
   --accent-strong: 234 88 12;
   --line: 228 228 231;
+  --font-heading: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --font-body: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
 }
 
 * {

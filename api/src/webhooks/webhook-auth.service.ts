@@ -32,4 +32,31 @@ export class WebhookAuthService {
 
     return client;
   }
+
+  async verifyTally(
+    clientSlug: string,
+    rawBody: string,
+    signature?: string,
+  ) {
+    if (!signature) {
+      throw new UnauthorizedException('Missing Tally signature');
+    }
+
+    const client = await this.clients.findActiveBySlug(clientSlug);
+    if (!client) throw new UnauthorizedException('Client not found');
+
+    const expected = createHmac('sha256', client.webhookSecret)
+      .update(rawBody)
+      .digest('base64');
+
+    const provided = Buffer.from(signature);
+    const computed = Buffer.from(expected);
+    const ok =
+      provided.length === computed.length &&
+      timingSafeEqual(provided, computed);
+
+    if (!ok) throw new UnauthorizedException('Invalid Tally signature');
+
+    return client;
+  }
 }

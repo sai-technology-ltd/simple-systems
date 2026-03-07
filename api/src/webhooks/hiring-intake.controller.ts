@@ -9,12 +9,14 @@ import {
 import { HiringIntakeDto } from './dto/hiring-intake.dto';
 import { WebhookAuthService } from './webhook-auth.service';
 import { HiringIntakeService } from './hiring-intake.service';
+import { TallyWebhookService } from './tally-webhook.service';
 
 @Controller('webhooks/hiring')
 export class HiringIntakeController {
   constructor(
     private readonly auth: WebhookAuthService,
     private readonly intakeService: HiringIntakeService,
+    private readonly tally: TallyWebhookService,
   ) {}
 
   @Post('intake/:clientSlug')
@@ -30,6 +32,18 @@ export class HiringIntakeController {
 
     const rawBody = JSON.stringify(dto);
     await this.auth.verify(clientSlug, rawBody, timestamp, signature);
+    return this.intakeService.process(clientSlug, dto);
+  }
+
+  @Post('tally/:clientSlug')
+  async tallyIntake(
+    @Param('clientSlug') clientSlug: string,
+    @Body() payload: Record<string, unknown>,
+    @Headers('tally-signature') signature?: string,
+  ) {
+    const rawBody = JSON.stringify(payload);
+    await this.auth.verifyTally(clientSlug, rawBody, signature);
+    const dto = this.tally.toHiringIntakeDto(payload);
     return this.intakeService.process(clientSlug, dto);
   }
 }

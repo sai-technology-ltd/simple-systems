@@ -25,6 +25,7 @@ import { PaymentsService } from './payments/payments.service';
 import { WebhookAuthService } from './webhooks/webhook-auth.service';
 import { HiringIntakeService } from './webhooks/hiring-intake.service';
 import { HiringIntakeController } from './webhooks/hiring-intake.controller';
+import { TallyWebhookService } from './webhooks/tally-webhook.service';
 import { EmailService } from './email/email.service';
 import { AdminController } from './admin/admin.controller';
 
@@ -48,6 +49,7 @@ import { AdminController } from './admin/admin.controller';
             'req.headers.authorization',
             'req.headers.x-admin-key',
             'req.headers.x-webhook-signature',
+            'req.headers.tally-signature',
             'req.body.candidateEmail',
             'req.body.candidateName',
             'req.body.phone',
@@ -85,6 +87,7 @@ import { AdminController } from './admin/admin.controller';
     SchemaValidatorService,
     WebhookAuthService,
     HiringIntakeService,
+    TallyWebhookService,
     EmailService,
     PaymentsService,
     {

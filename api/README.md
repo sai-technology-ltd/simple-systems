@@ -13,6 +13,7 @@ Multi-tenant NestJS backend for Simple Hiring.
 - Validates the Notion schema required by the hiring product
 - Serves role metadata and application endpoints
 - Processes webhook-driven and direct test submissions
+- Accepts direct Tally form webhooks with signature verification
 - Handles activation and payment state
 
 ## Quick start
@@ -134,6 +135,7 @@ The schema validator expects the following properties:
 - `POST /payments/paddle/webhook`
 - `GET /apply/:clientSlug/:roleSlug`
 - `POST /webhooks/hiring/intake/:clientSlug`
+- `POST /webhooks/hiring/tally/:clientSlug`
 - `POST /admin/clients`
 - `GET /admin/clients`
 - `GET /admin/clients/:clientSlug`
