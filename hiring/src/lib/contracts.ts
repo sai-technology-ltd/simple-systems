@@ -84,12 +84,19 @@ export interface NotionConnectResponse {
 
 export interface PaymentInitializeResponse {
   authorizationUrl: string;
+  provider?: string | null;
+  checkoutMode?: "overlay" | "popup" | "redirect" | null;
+  checkoutUrl?: string | null;
+  checkoutId?: string | null;
+  accessCode?: string | null;
   reference?: string | null;
 }
 
 export interface PaymentVerifyResponse {
   paid: boolean;
   activated?: boolean;
+  provider?: string | null;
+  reference?: string | null;
 }
 
 export interface TestSubmissionResponse {
