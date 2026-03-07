@@ -78,7 +78,9 @@ describe('HiringIntakeService', () => {
         Email: { email: 'jane@example.com' },
         Phone: { phone_number: '+15550000000' },
         'CV URL': { url: 'https://example.com/cv.pdf' },
-        Notes: { rich_text: [{ text: { content: 'Strong infra background.' } }] },
+        Notes: {
+          rich_text: [{ text: { content: 'Strong infra background.' } }],
+        },
         Role: { relation: [{ id: 'role-1' }] },
         Stage: { relation: [{ id: 'stage-1' }] },
       }),
@@ -141,7 +143,10 @@ describe('HiringIntakeService', () => {
         Email: { type: 'rich_text' },
       },
     } as never);
-    clients.canSendEmail.mockResolvedValue({ ok: false, reason: 'QUOTA_EXCEEDED' } as never);
+    clients.canSendEmail.mockResolvedValue({
+      ok: false,
+      reason: 'QUOTA_EXCEEDED',
+    } as never);
 
     await expect(
       service.process('swift-transport', {

@@ -126,7 +126,8 @@ describe('ClientWorkspaceController', () => {
         slug: 'backend-engineer',
         status: 'Open',
         description: 'Build APIs',
-        applicationUrl: 'https://simplehiring.app/apply/swift-transport/backend-engineer',
+        applicationUrl:
+          'https://simplehiring.app/apply/swift-transport/backend-engineer',
       },
     ]);
   });
@@ -165,7 +166,10 @@ describe('ClientWorkspaceController', () => {
       fixes: [],
     });
 
-    const result = await controller.getRole('swift-transport', 'backend-engineer');
+    const result = await controller.getRole(
+      'swift-transport',
+      'backend-engineer',
+    );
 
     expect(result.formMode).toBe('redirect');
     expect(result.formUrl).toBe('https://forms.example.com/apply');
@@ -208,7 +212,10 @@ describe('ClientWorkspaceController', () => {
       fixes: [],
     });
 
-    const result = await controller.getRole('swift-transport', 'backend-engineer');
+    const result = await controller.getRole(
+      'swift-transport',
+      'backend-engineer',
+    );
 
     expect(result.formMode).toBe('redirect');
     expect(result.formUrl).toBe('https://forms.example.com/apply');
@@ -246,7 +253,8 @@ describe('ClientWorkspaceController', () => {
 
     await expect(controller.validate('swift-transport')).resolves.toEqual({
       ok: false,
-      message: 'Your Notion databases need a few fixes before the workspace can go live.',
+      message:
+        'Your Notion databases need a few fixes before the workspace can go live.',
       issues: [
         {
           database: 'roles',
@@ -534,9 +542,9 @@ describe('ClientWorkspaceController', () => {
       results: [],
     } as never);
 
-    await expect(controller.testSubmission('swift-transport')).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+    await expect(
+      controller.testSubmission('swift-transport'),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('rejects test submission when no reply-to email is configured', async () => {
@@ -546,16 +554,16 @@ describe('ClientWorkspaceController', () => {
       paymentStatus: PaymentStatus.PENDING,
     } as never);
 
-    await expect(controller.testSubmission('swift-transport')).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+    await expect(
+      controller.testSubmission('swift-transport'),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('throws when listing roles for a missing client', async () => {
     clients.findActiveBySlug.mockResolvedValue(null as never);
 
-    await expect(controller.listRoles('swift-transport')).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+    await expect(
+      controller.listRoles('swift-transport'),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 });

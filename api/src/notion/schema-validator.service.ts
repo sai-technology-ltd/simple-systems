@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 
-type Missing = { database: 'candidates' | 'roles' | 'stages'; property: string; recommendedType: string };
+type Missing = {
+  database: 'candidates' | 'roles' | 'stages';
+  property: string;
+  recommendedType: string;
+};
 
 @Injectable()
 export class SchemaValidatorService {
@@ -24,7 +28,13 @@ export class SchemaValidatorService {
     const cProps = payload.candidates?.properties || {};
     mustHave('candidates', cProps, 'Name', ['title'], 'title');
     mustHave('candidates', cProps, 'Email', ['email', 'rich_text'], 'email');
-    mustHave('candidates', cProps, 'Phone', ['phone_number', 'rich_text'], 'phone_number');
+    mustHave(
+      'candidates',
+      cProps,
+      'Phone',
+      ['phone_number', 'rich_text'],
+      'phone_number',
+    );
     mustHave('candidates', cProps, 'CV URL', ['url', 'rich_text'], 'url');
     mustHave('candidates', cProps, 'Role', ['relation'], 'relation');
     mustHave('candidates', cProps, 'Stage', ['relation'], 'relation');
@@ -42,7 +52,10 @@ export class SchemaValidatorService {
     return {
       valid: missing.length === 0,
       missing,
-      fixes: missing.map((m) => `In ${m.database} DB, add property \"${m.property}\" as type ${m.recommendedType}.`),
+      fixes: missing.map(
+        (m) =>
+          `In ${m.database} DB, add property \"${m.property}\" as type ${m.recommendedType}.`,
+      ),
     };
   }
 }

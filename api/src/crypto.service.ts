@@ -1,6 +1,11 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createCipheriv, createDecipheriv, randomBytes, timingSafeEqual } from 'crypto';
+import {
+  createCipheriv,
+  createDecipheriv,
+  randomBytes,
+  timingSafeEqual,
+} from 'crypto';
 
 @Injectable()
 export class CryptoService implements OnModuleInit {
@@ -16,7 +21,10 @@ export class CryptoService implements OnModuleInit {
   encrypt(plain: string): string {
     const iv = randomBytes(12);
     const cipher = createCipheriv('aes-256-gcm', this.key, iv);
-    const ciphertext = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()]);
+    const ciphertext = Buffer.concat([
+      cipher.update(plain, 'utf8'),
+      cipher.final(),
+    ]);
     const tag = cipher.getAuthTag();
     return `${iv.toString('base64')}:${ciphertext.toString('base64')}:${tag.toString('base64')}`;
   }
@@ -49,6 +57,8 @@ export class CryptoService implements OnModuleInit {
       return b64;
     }
 
-    throw new Error('Invalid TOKEN_ENC_KEY. Must be 64-char hex or base64-encoded 32-byte key.');
+    throw new Error(
+      'Invalid TOKEN_ENC_KEY. Must be 64-char hex or base64-encoded 32-byte key.',
+    );
   }
 }

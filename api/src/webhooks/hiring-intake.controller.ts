@@ -1,4 +1,11 @@
-import { Body, Controller, Headers, Param, Post, UnauthorizedException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Headers,
+  Param,
+  Post,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { HiringIntakeDto } from './dto/hiring-intake.dto';
 import { WebhookAuthService } from './webhook-auth.service';
 import { HiringIntakeService } from './hiring-intake.service';

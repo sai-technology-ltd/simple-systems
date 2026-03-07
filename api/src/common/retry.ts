@@ -1,6 +1,10 @@
 export async function withRetry<T>(
   fn: () => Promise<T>,
-  opts: { retries?: number; baseDelayMs?: number; retryOnStatus?: number[] } = {},
+  opts: {
+    retries?: number;
+    baseDelayMs?: number;
+    retryOnStatus?: number[];
+  } = {},
 ): Promise<T> {
   const retries = opts.retries ?? 2;
   const baseDelayMs = opts.baseDelayMs ?? 300;

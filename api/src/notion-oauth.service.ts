@@ -114,7 +114,8 @@ export class NotionOauthService {
       throw new BadRequestException('Client not found after Notion connection');
     }
 
-    const appUrl = this.config.get<string>('HIRING_APP_URL') || 'https://simplehiring.app';
+    const appUrl =
+      this.config.get<string>('HIRING_APP_URL') || 'https://simplehiring.app';
     const redirect = new URL('/onboarding', appUrl);
     redirect.searchParams.set('clientSlug', client.clientSlug);
 

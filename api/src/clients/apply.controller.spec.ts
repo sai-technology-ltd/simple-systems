@@ -45,7 +45,9 @@ describe('ApplyController', () => {
       ],
     } as never);
 
-    await expect(controller.resolve('swift-transport', 'backend-engineer')).resolves.toEqual({
+    await expect(
+      controller.resolve('swift-transport', 'backend-engineer'),
+    ).resolves.toEqual({
       clientSlug: 'swift-transport',
       roleSlug: 'backend-engineer',
       rolePageId: 'role-page-1',
@@ -63,13 +65,17 @@ describe('ApplyController', () => {
     } as never);
     intake.process.mockResolvedValue({ ok: true } as never);
 
-    const response = await controller.submit('swift-transport', 'backend-engineer', {
-      name: 'Jane Doe',
-      email: 'jane@example.com',
-      phone: '+15550000000',
-      cvUrl: 'https://example.com/cv.pdf',
-      notes: 'Five years of experience.',
-    });
+    const response = await controller.submit(
+      'swift-transport',
+      'backend-engineer',
+      {
+        name: 'Jane Doe',
+        email: 'jane@example.com',
+        phone: '+15550000000',
+        cvUrl: 'https://example.com/cv.pdf',
+        notes: 'Five years of experience.',
+      },
+    );
 
     expect(intake.process).toHaveBeenCalledWith(
       'swift-transport',
@@ -107,17 +113,17 @@ describe('ApplyController', () => {
     } as never);
     notion.findRoleBySlug.mockResolvedValue({ results: [] } as never);
 
-    await expect(controller.resolve('swift-transport', 'missing-role')).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+    await expect(
+      controller.resolve('swift-transport', 'missing-role'),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('throws when the client is not configured for hiring roles', async () => {
     clients.findActiveBySlug.mockResolvedValue(null as never);
 
-    await expect(controller.resolve('swift-transport', 'backend-engineer')).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+    await expect(
+      controller.resolve('swift-transport', 'backend-engineer'),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('falls back to the Name property when Role Name is missing', async () => {
@@ -138,7 +144,9 @@ describe('ApplyController', () => {
       ],
     } as never);
 
-    await expect(controller.resolve('swift-transport', 'platform-engineer')).resolves.toEqual({
+    await expect(
+      controller.resolve('swift-transport', 'platform-engineer'),
+    ).resolves.toEqual({
       clientSlug: 'swift-transport',
       roleSlug: 'platform-engineer',
       rolePageId: 'role-page-1',

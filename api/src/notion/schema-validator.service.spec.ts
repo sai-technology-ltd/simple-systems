@@ -4,7 +4,9 @@ describe('SchemaValidatorService', () => {
   const svc = new SchemaValidatorService();
 
   it('returns valid for matching schemas', () => {
-    const mk = (props: Record<string, { type: string }>) => ({ properties: props });
+    const mk = (props: Record<string, { type: string }>) => ({
+      properties: props,
+    });
     const res = svc.validate({
       candidates: mk({
         Name: { type: 'title' },
@@ -31,7 +33,11 @@ describe('SchemaValidatorService', () => {
   });
 
   it('returns actionable fixes for missing fields', () => {
-    const res = svc.validate({ candidates: { properties: {} }, roles: { properties: {} }, stages: { properties: {} } });
+    const res = svc.validate({
+      candidates: { properties: {} },
+      roles: { properties: {} },
+      stages: { properties: {} },
+    });
     expect(res.valid).toBe(false);
     expect(res.fixes.length).toBeGreaterThan(0);
   });

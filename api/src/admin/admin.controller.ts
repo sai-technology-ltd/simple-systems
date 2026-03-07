@@ -30,7 +30,10 @@ export class AdminController {
   }
 
   @Post('clients')
-  async createClient(@Headers('x-admin-key') key: string, @Body() dto: CreateClientDto) {
+  async createClient(
+    @Headers('x-admin-key') key: string,
+    @Body() dto: CreateClientDto,
+  ) {
     this.assertAdmin(key);
     return this.clients.createClient(dto);
   }
@@ -42,31 +45,46 @@ export class AdminController {
   }
 
   @Get('clients/:clientSlug')
-  async getClient(@Headers('x-admin-key') key: string, @Param('clientSlug') clientSlug: string) {
+  async getClient(
+    @Headers('x-admin-key') key: string,
+    @Param('clientSlug') clientSlug: string,
+  ) {
     this.assertAdmin(key);
     return this.clients.getBySlug(clientSlug);
   }
 
   @Post('clients/:clientSlug/suspend')
-  async suspend(@Headers('x-admin-key') key: string, @Param('clientSlug') clientSlug: string) {
+  async suspend(
+    @Headers('x-admin-key') key: string,
+    @Param('clientSlug') clientSlug: string,
+  ) {
     this.assertAdmin(key);
     return this.clients.setStatus(clientSlug, ClientStatus.SUSPENDED);
   }
 
   @Post('clients/:clientSlug/activate')
-  async activate(@Headers('x-admin-key') key: string, @Param('clientSlug') clientSlug: string) {
+  async activate(
+    @Headers('x-admin-key') key: string,
+    @Param('clientSlug') clientSlug: string,
+  ) {
     this.assertAdmin(key);
     return this.clients.setStatus(clientSlug, ClientStatus.ACTIVE);
   }
 
   @Post('clients/:clientSlug/rotate-webhook-secret')
-  async rotateSecret(@Headers('x-admin-key') key: string, @Param('clientSlug') clientSlug: string) {
+  async rotateSecret(
+    @Headers('x-admin-key') key: string,
+    @Param('clientSlug') clientSlug: string,
+  ) {
     this.assertAdmin(key);
     return this.clients.rotateWebhookSecret(clientSlug);
   }
 
   @Get('clients/:clientSlug/logs')
-  async logs(@Headers('x-admin-key') key: string, @Param('clientSlug') clientSlug: string) {
+  async logs(
+    @Headers('x-admin-key') key: string,
+    @Param('clientSlug') clientSlug: string,
+  ) {
     this.assertAdmin(key);
     const client = await this.clients.getBySlug(clientSlug);
     if (!client) throw new BadRequestException('Client not found');

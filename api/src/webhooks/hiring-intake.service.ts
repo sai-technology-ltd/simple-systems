@@ -21,17 +21,25 @@ export class HiringIntakeService {
       throw new BadRequestException('Client setup incomplete');
     }
 
-    if (dto.submissionId && (await this.events.seenSubmission(client.id, dto.submissionId))) {
+    if (
+      dto.submissionId &&
+      (await this.events.seenSubmission(client.id, dto.submissionId))
+    ) {
       return { ok: true, idempotent: true };
     }
 
-    const stages = (await this.notion.queryDatabase(clientSlug, client.notionDbStagesId, {
-      sorts: [{ property: 'Order', direction: 'ascending' }],
-      page_size: 1,
-    })) as { results?: Array<{ id: string }> };
+    const stages = (await this.notion.queryDatabase(
+      clientSlug,
+      client.notionDbStagesId,
+      {
+        sorts: [{ property: 'Order', direction: 'ascending' }],
+        page_size: 1,
+      },
+    )) as { results?: Array<{ id: string }> };
 
     const firstStage = stages.results?.[0]?.id;
-    if (!firstStage) throw new BadRequestException('No stages found in Stages DB');
+    if (!firstStage)
+      throw new BadRequestException('No stages found in Stages DB');
 
     const candidatesDb = (await this.notion.getDatabase(
       clientSlug,
@@ -41,7 +49,11 @@ export class HiringIntakeService {
     };
 
     await this.notion.createPage(clientSlug, client.notionDbCandidatesId, {
-      ...this.buildCandidateProperties(candidatesDb.properties ?? {}, dto, firstStage),
+      ...this.buildCandidateProperties(
+        candidatesDb.properties ?? {},
+        dto,
+        firstStage,
+      ),
     });
 
     const quota = await this.clients.canSendEmail(client.id);
@@ -92,7 +104,12 @@ export class HiringIntakeService {
     }
 
     if (dto.notes) {
-      for (const field of ['Notes', 'Additional Notes', 'Cover Letter', 'Candidate Notes']) {
+      for (const field of [
+        'Notes',
+        'Additional Notes',
+        'Cover Letter',
+        'Candidate Notes',
+      ]) {
         if (properties[field]) {
           this.assignTypedValue(payload, properties, field, dto.notes);
           break;

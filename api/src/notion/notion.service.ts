@@ -21,7 +21,8 @@ export class NotionService {
     const token = this.crypto.decrypt(client.notionAccessTokenEnc);
     return {
       Authorization: `Bearer ${token}`,
-      'Notion-Version': this.config.get<string>('NOTION_VERSION') || '2022-06-28',
+      'Notion-Version':
+        this.config.get<string>('NOTION_VERSION') || '2022-06-28',
       'Content-Type': 'application/json',
     };
   }
@@ -43,8 +44,12 @@ export class NotionService {
         err.status = res.status;
         throw err;
       }
-      return (await res.json()) as { results?: Array<{ id: string; title?: Array<{ plain_text: string }> }> };
-    })) as { results?: Array<{ id: string; title?: Array<{ plain_text: string }> }> };
+      return (await res.json()) as {
+        results?: Array<{ id: string; title?: Array<{ plain_text: string }> }>;
+      };
+    })) as {
+      results?: Array<{ id: string; title?: Array<{ plain_text: string }> }>;
+    };
 
     return (data.results || []).map((db) => ({
       id: db.id,
@@ -55,7 +60,10 @@ export class NotionService {
   async getDatabase(clientSlug: string, databaseId: string) {
     const headers = await this.clientHeaders(clientSlug);
     return withRetry(async () => {
-      const res = await fetch(`https://api.notion.com/v1/databases/${databaseId}`, { headers });
+      const res = await fetch(
+        `https://api.notion.com/v1/databases/${databaseId}`,
+        { headers },
+      );
       if (!res.ok) {
         const err: any = new Error(`Notion get database failed: ${res.status}`);
         err.status = res.status;
@@ -68,11 +76,14 @@ export class NotionService {
   async queryDatabase(clientSlug: string, databaseId: string, body: object) {
     const headers = await this.clientHeaders(clientSlug);
     return withRetry(async () => {
-      const res = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(body),
-      });
+      const res = await fetch(
+        `https://api.notion.com/v1/databases/${databaseId}/query`,
+        {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(body),
+        },
+      );
       if (!res.ok) {
         const err: any = new Error(`Notion query failed: ${res.status}`);
         err.status = res.status;
@@ -82,7 +93,11 @@ export class NotionService {
     });
   }
 
-  async createPage(clientSlug: string, databaseId: string, properties: Record<string, unknown>) {
+  async createPage(
+    clientSlug: string,
+    databaseId: string,
+    properties: Record<string, unknown>,
+  ) {
     const headers = await this.clientHeaders(clientSlug);
     return withRetry(async () => {
       const res = await fetch('https://api.notion.com/v1/pages', {
@@ -102,26 +117,35 @@ export class NotionService {
     });
   }
 
-  async findRoleBySlug(clientSlug: string, rolesDbId: string, roleSlug: string) {
+  async findRoleBySlug(
+    clientSlug: string,
+    rolesDbId: string,
+    roleSlug: string,
+  ) {
     const headers = await this.clientHeaders(clientSlug);
     return withRetry(async () => {
-      const res = await fetch(`https://api.notion.com/v1/databases/${rolesDbId}/query`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          filter: {
-            property: 'Public Slug',
-            rich_text: { equals: roleSlug },
-          },
-          page_size: 1,
-        }),
-      });
+      const res = await fetch(
+        `https://api.notion.com/v1/databases/${rolesDbId}/query`,
+        {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            filter: {
+              property: 'Public Slug',
+              rich_text: { equals: roleSlug },
+            },
+            page_size: 1,
+          }),
+        },
+      );
       if (!res.ok) {
         const err: any = new Error(`Notion role query failed: ${res.status}`);
         err.status = res.status;
         throw err;
       }
-      return (await res.json()) as { results?: Array<{ id: string; properties?: Record<string, any> }> };
+      return (await res.json()) as {
+        results?: Array<{ id: string; properties?: Record<string, any> }>;
+      };
     });
   }
 }

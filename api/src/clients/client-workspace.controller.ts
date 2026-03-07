@@ -57,14 +57,22 @@ export class ClientWorkspaceController {
     if (!client) throw new BadRequestException('Client not found');
 
     const validation = await this.validateWorkspace(clientSlug, true);
-    const previewTestUsed = await this.events.hasSuccessfulEvent(client.id, 'HIRING_PREVIEW_TEST');
+    const previewTestUsed = await this.events.hasSuccessfulEvent(
+      client.id,
+      'HIRING_PREVIEW_TEST',
+    );
     const previewTestAvailable =
-      client.paymentStatus !== PaymentStatus.PAID && validation.ok && !previewTestUsed;
+      client.paymentStatus !== PaymentStatus.PAID &&
+      validation.ok &&
+      !previewTestUsed;
 
     return {
       clientSlug: client.clientSlug,
       status: this.workspaceStatus(client.paymentStatus, validation.ok),
-      activatedAt: client.paymentStatus === PaymentStatus.PAID ? client.updatedAt.toISOString() : null,
+      activatedAt:
+        client.paymentStatus === PaymentStatus.PAID
+          ? client.updatedAt.toISOString()
+          : null,
       settings: {
         companyName: client.companyName,
         replyToEmail: client.replyToEmail ?? '',
@@ -75,7 +83,9 @@ export class ClientWorkspaceController {
       paymentPaid: client.paymentStatus === PaymentStatus.PAID,
       paymentPending: client.paymentStatus === PaymentStatus.PENDING,
       databasesSaved: Boolean(
-        client.notionDbCandidatesId && client.notionDbRolesId && client.notionDbStagesId,
+        client.notionDbCandidatesId &&
+        client.notionDbRolesId &&
+        client.notionDbStagesId,
       ),
       selectedDatabases: {
         candidatesDatabaseId: client.notionDbCandidatesId ?? '',
@@ -97,9 +107,13 @@ export class ClientWorkspaceController {
   @Get('roles')
   async listRoles(@Param('clientSlug') clientSlug: string) {
     const client = await this.requireClientWithRoles(clientSlug);
-    const roles = await this.notion.queryDatabase(clientSlug, client.notionDbRolesId!, {
-      page_size: 100,
-    });
+    const roles = await this.notion.queryDatabase(
+      clientSlug,
+      client.notionDbRolesId!,
+      {
+        page_size: 100,
+      },
+    );
 
     return ((roles as { results?: NotionPage[] }).results ?? [])
       .map((role) => this.mapRoleSummary(clientSlug, role))
@@ -112,7 +126,11 @@ export class ClientWorkspaceController {
     @Param('roleSlug') roleSlug: string,
   ) {
     const client = await this.requireClientWithRoles(clientSlug);
-    const result = await this.notion.findRoleBySlug(clientSlug, client.notionDbRolesId!, roleSlug);
+    const result = await this.notion.findRoleBySlug(
+      clientSlug,
+      client.notionDbRolesId!,
+      roleSlug,
+    );
     const role = result.results?.[0] as NotionPage | undefined;
     if (!role) throw new BadRequestException('Role not found');
 
@@ -128,7 +146,8 @@ export class ClientWorkspaceController {
       ...this.mapRoleSummary(clientSlug, role),
       clientSlug,
       companyName: client.companyName,
-      workspaceActive: client.paymentStatus === PaymentStatus.PAID && validation.ok,
+      workspaceActive:
+        client.paymentStatus === PaymentStatus.PAID && validation.ok,
       formUrl: externalFormUrl,
       formMode: externalFormUrl ? 'redirect' : 'native',
     };
@@ -143,15 +162,22 @@ export class ClientWorkspaceController {
   async testSubmission(@Param('clientSlug') clientSlug: string) {
     const client = await this.requireClientWithRoles(clientSlug);
     if (!client.replyToEmail) {
-      throw new BadRequestException('Add a reply-to email before sending a test application');
+      throw new BadRequestException(
+        'Add a reply-to email before sending a test application',
+      );
     }
     if (client.paymentStatus !== PaymentStatus.PAID) {
       const validation = await this.validateWorkspace(clientSlug, true);
       if (!validation.ok) {
-        throw new BadRequestException('Validate your workspace before sending a preview test.');
+        throw new BadRequestException(
+          'Validate your workspace before sending a preview test.',
+        );
       }
 
-      const previewAlreadyUsed = await this.events.hasSuccessfulEvent(client.id, 'HIRING_PREVIEW_TEST');
+      const previewAlreadyUsed = await this.events.hasSuccessfulEvent(
+        client.id,
+        'HIRING_PREVIEW_TEST',
+      );
       if (previewAlreadyUsed) {
         throw new BadRequestException(
           'Your free preview test is already used. Complete payment to keep sending test applications.',
@@ -159,9 +185,13 @@ export class ClientWorkspaceController {
       }
     }
 
-    const roles = await this.notion.queryDatabase(clientSlug, client.notionDbRolesId!, {
-      page_size: 1,
-    });
+    const roles = await this.notion.queryDatabase(
+      clientSlug,
+      client.notionDbRolesId!,
+      {
+        page_size: 1,
+      },
+    );
     const role = (roles as { results?: NotionPage[] }).results?.[0];
     if (!role) throw new BadRequestException('No roles found');
 
@@ -183,7 +213,9 @@ export class ClientWorkspaceController {
       });
     }
 
-    const roleName = this.getPlainText(role.properties, ['Role Name', 'Name']) || 'your first role';
+    const roleName =
+      this.getPlainText(role.properties, ['Role Name', 'Name']) ||
+      'your first role';
 
     return {
       ok: true,
@@ -267,7 +299,10 @@ export class ClientWorkspaceController {
     return missing;
   }
 
-  private handleValidationFailure(error: unknown, silent: boolean): WorkspaceValidationResult {
+  private handleValidationFailure(
+    error: unknown,
+    silent: boolean,
+  ): WorkspaceValidationResult {
     const detail = this.describeValidationError(error);
     return {
       ok: false,
@@ -303,18 +338,23 @@ export class ClientWorkspaceController {
   }
 
   private readErrorField<T>(error: unknown, key: string): T | undefined {
-    if (!error || typeof error !== 'object' || !(key in error)) return undefined;
+    if (!error || typeof error !== 'object' || !(key in error))
+      return undefined;
     return (error as Record<string, T>)[key];
   }
 
   private async requireClientWithRoles(clientSlug: string) {
     const client = await this.clients.findActiveBySlug(clientSlug);
     if (!client) throw new BadRequestException('Client not found');
-    if (!client.notionDbRolesId) throw new BadRequestException('Roles database not configured');
+    if (!client.notionDbRolesId)
+      throw new BadRequestException('Roles database not configured');
     return client;
   }
 
-  private workspaceStatus(paymentStatus: PaymentStatus, validationPassed: boolean) {
+  private workspaceStatus(
+    paymentStatus: PaymentStatus,
+    validationPassed: boolean,
+  ) {
     if (paymentStatus === PaymentStatus.PAID) return 'active';
     if (validationPassed) return 'setup_complete';
     if (paymentStatus === PaymentStatus.PENDING) return 'in_progress';
@@ -326,11 +366,19 @@ export class ClientWorkspaceController {
 
     return {
       id: role.id,
-      name: this.getPlainText(role.properties, ['Role Name', 'Name']) || 'Untitled role',
+      name:
+        this.getPlainText(role.properties, ['Role Name', 'Name']) ||
+        'Untitled role',
       slug: slug || '',
-      description: this.getPlainText(role.properties, ['Description', 'Summary', 'Job Description']),
+      description: this.getPlainText(role.properties, [
+        'Description',
+        'Summary',
+        'Job Description',
+      ]),
       status: this.getSelectName(role.properties, ['Status']),
-      applicationUrl: slug ? `https://simplehiring.app/apply/${clientSlug}/${slug}` : null,
+      applicationUrl: slug
+        ? `https://simplehiring.app/apply/${clientSlug}/${slug}`
+        : null,
     };
   }
 
@@ -342,11 +390,17 @@ export class ClientWorkspaceController {
       const value = properties?.[name];
       if (!value) continue;
       if (value.title?.length) {
-        const text = value.title.map((item) => item.plain_text ?? '').join('').trim();
+        const text = value.title
+          .map((item) => item.plain_text ?? '')
+          .join('')
+          .trim();
         if (text) return text;
       }
       if (value.rich_text?.length) {
-        const text = value.rich_text.map((item) => item.plain_text ?? '').join('').trim();
+        const text = value.rich_text
+          .map((item) => item.plain_text ?? '')
+          .join('')
+          .trim();
         if (text) return text;
       }
     }
@@ -375,8 +429,12 @@ export class ClientWorkspaceController {
       if (!value) continue;
       if (value.url) return value.url;
       if (value.rich_text?.length) {
-        const text = value.rich_text.map((item) => item.plain_text ?? '').join('').trim();
-        if (text.startsWith('http://') || text.startsWith('https://')) return text;
+        const text = value.rich_text
+          .map((item) => item.plain_text ?? '')
+          .join('')
+          .trim();
+        if (text.startsWith('http://') || text.startsWith('https://'))
+          return text;
       }
     }
 

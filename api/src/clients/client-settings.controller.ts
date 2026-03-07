@@ -1,4 +1,10 @@
-import { BadRequestException, Body, Controller, Param, Patch } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Param,
+  Patch,
+} from '@nestjs/common';
 import { ClientService } from '../client.service';
 import { EventLogService } from '../event-log.service';
 import { UpdateSettingsDto } from './dto/update-settings.dto';

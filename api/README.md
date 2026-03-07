@@ -36,12 +36,24 @@ This repo ships with `docker-compose.yml` using `supabase/postgres`:
 ## Key env vars
 - `DATABASE_URL`
 - `TOKEN_ENC_KEY`
+- `PAYMENT_PROVIDER`
 - `NOTION_CLIENT_ID`
 - `NOTION_CLIENT_SECRET`
 - `NOTION_REDIRECT_URI`
 - `POSTMARK_SERVER_TOKEN`
 - `ADMIN_API_KEY`
 - `OAUTH_STATE_SECRET`
+- `LEMON_SQUEEZY_API_KEY`
+- `LEMON_SQUEEZY_STORE_ID`
+- `LEMON_SQUEEZY_VARIANT_ID`
+- `LEMON_SQUEEZY_WEBHOOK_SECRET`
+- `LEMON_SQUEEZY_DEFAULT_AMOUNT`
+- `LEMON_SQUEEZY_TEST_MODE`
+- `PADDLE_API_KEY`
+- `PADDLE_PRICE_ID`
+- `PADDLE_WEBHOOK_SECRET`
+- `PADDLE_DEFAULT_AMOUNT`
+- `PADDLE_DEFAULT_CURRENCY_CODE`
 - `HIRING_APP_URL`
 
 ## Core onboarding flow
@@ -118,6 +130,8 @@ The schema validator expects the following properties:
 - `POST /clients/:clientSlug/test-submission`
 - `POST /clients/:clientSlug/payments/initialize`
 - `GET /clients/:clientSlug/payments/verify`
+- `POST /payments/lemonsqueezy/webhook`
+- `POST /payments/paddle/webhook`
 - `GET /apply/:clientSlug/:roleSlug`
 - `POST /webhooks/hiring/intake/:clientSlug`
 - `POST /admin/clients`

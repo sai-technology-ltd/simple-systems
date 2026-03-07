@@ -6,15 +6,22 @@ import { ClientService } from '../client.service';
 export class WebhookAuthService {
   constructor(private readonly clients: ClientService) {}
 
-  async verify(clientSlug: string, rawBody: string, timestamp: string, signature: string) {
+  async verify(
+    clientSlug: string,
+    rawBody: string,
+    timestamp: string,
+    signature: string,
+  ) {
     const client = await this.clients.findActiveBySlug(clientSlug);
     if (!client) throw new UnauthorizedException('Client not found');
 
     const ts = Number(timestamp);
-    if (!Number.isFinite(ts)) throw new UnauthorizedException('Invalid webhook timestamp');
+    if (!Number.isFinite(ts))
+      throw new UnauthorizedException('Invalid webhook timestamp');
 
     const ageMs = Math.abs(Date.now() - ts * 1000);
-    if (ageMs > 5 * 60 * 1000) throw new UnauthorizedException('Webhook timestamp expired');
+    if (ageMs > 5 * 60 * 1000)
+      throw new UnauthorizedException('Webhook timestamp expired');
 
     const expected = createHmac('sha256', client.webhookSecret)
       .update(`${timestamp}.${rawBody}`)

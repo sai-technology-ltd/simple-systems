@@ -1,4 +1,11 @@
-import { Body, Controller, Get, Param, Post, BadRequestException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  BadRequestException,
+} from '@nestjs/common';
 import { ClientService } from '../client.service';
 import { EventLogService } from '../event-log.service';
 import { NotionService } from '../notion/notion.service';
@@ -20,7 +27,10 @@ export class ClientsController {
   }
 
   @Post('databases/select')
-  async select(@Param('clientSlug') clientSlug: string, @Body() dto: SelectDatabasesDto) {
+  async select(
+    @Param('clientSlug') clientSlug: string,
+    @Body() dto: SelectDatabasesDto,
+  ) {
     const client = await this.clients.findActiveBySlug(clientSlug);
     if (!client) throw new BadRequestException('Client not found');
 
@@ -43,7 +53,9 @@ export class ClientsController {
       type: 'NOTION_DATABASES_SELECTED',
       success: result.valid,
       meta: result,
-      message: result.valid ? 'Database selection validated' : 'Schema validation failed',
+      message: result.valid
+        ? 'Database selection validated'
+        : 'Schema validation failed',
     });
 
     return result;
